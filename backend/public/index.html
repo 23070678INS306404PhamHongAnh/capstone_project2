@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ShopeeFood — Đơn hàng đang chờ</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 30px;
+    }
+    main {
+      max-width: 900px;
+      margin: auto;
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+      overflow-x: auto;
+    }
+    h1 { color: #ee4d2d; }
+    button {
+      background: #ee4d2d;
+      color: white;
+      border: none;
+      padding: 12px 18px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      padding: 14px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th { background: #fff3ee; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Đơn hàng đang chờ</h1>
+    <button id="reload">Tải lại danh sách</button>
+    <p id="message" role="status"></p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Mã đơn</th>
+          <th>Khách hàng</th>
+          <th>Tổng tiền</th>
+          <th>Trạng thái</th>
+        </tr>
+      </thead>
+      <tbody id="orders"></tbody>
+    </table>
+  </main>
+
+  <script>
+    const button = document.getElementById("reload");
+    const message = document.getElementById("message");
+    const tbody = document.getElementById("orders");
+    const currency = new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND"
+    });
+
+    async function loadOrders() {
+      button.disabled = true;
+      message.textContent = "Đang tải...";
+      tbody.replaceChildren();
+
+      try {
+        const response = await fetch("/api/orders/pending");
+        if (!response.ok) {
+          throw new Error("Không thể tải danh sách đơn hàng.");
+        }
+
+        const result = await response.json();
+
+        for (const order of result.data) {
+          const row = document.createElement("tr");
+          const values = [
+            order.order_code,
+            order.customer_name,
+            currency.format(Number(order.total_amount)),
+            "Đang chờ"
+          ];
+
+          for (const value of values) {
+            const cell = document.createElement("td");
+            cell.textContent = value;
+            row.appendChild(cell);
+          }
+
+          tbody.appendChild(row);
+        }
+
+        message.textContent = result.data.length
+          ? `Có ${result.data.length} đơn hàng đang chờ.`
+          : "Không có đơn hàng đang chờ.";
+      } catch (error) {
+        message.textContent = "Tải dữ liệu thất bại. Hãy kiểm tra backend và thử lại.";
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    button.addEventListener("click", loadOrders);
+    loadOrders();
+  </script>
+</body>
+</html>
