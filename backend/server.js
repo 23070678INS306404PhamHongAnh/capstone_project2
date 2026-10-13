@@ -45,7 +45,7 @@ async function start() {
     await pool.query("SELECT 1");
 
     const port = Number(process.env.PORT || 3000);
-    app.listen(port, "127.0.0.1", () => {
+    app.listen(port, process.env.HOST || "127.0.0.1", () => {
       console.log(`Backend đang chạy tại http://localhost:${port}`);
       console.log("Kết nối MySQL thành công.");
     });
