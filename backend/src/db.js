@@ -12,8 +12,13 @@ const pool = mysql.createPool({
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   charset: "utf8mb4",
+  timezone: "Z",
   waitForConnections: true,
   connectionLimit: 5,
+});
+
+pool.on("connection", connection => {
+  connection.query("SET time_zone = '+00:00'");
 });
 
 module.exports = { pool };

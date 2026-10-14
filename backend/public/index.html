@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>DispatchFlow — Orders</title>
+  <script src="/auth-client.js" data-role="manager"></script>
+  <title>ShopeeFood Delivery DSS — Orders</title>
 
   <style>
     * { box-sizing: border-box; }
@@ -22,21 +23,35 @@
     }
 
     header strong { font-size: 24px; }
-    header span { color: #aebdcb; margin-left: 15px; }
+
+    header small {
+      display: block;
+      color: #aebdcb;
+      margin-top: 8px;
+    }
+
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-top: 18px;
+    }
+
+    nav a { color: white; text-decoration: none; }
 
     main {
-      max-width: 1100px;
+      max-width: 1150px;
       margin: 35px auto;
       padding: 0 20px;
     }
 
     h1 { margin-bottom: 8px; }
-    .subtitle { color: #6d7c89; }
+    .muted { color: #6d7c89; line-height: 1.6; }
 
-    .toolbar {
+    .toolbar, .form-actions {
       display: flex;
-      gap: 10px;
       flex-wrap: wrap;
+      gap: 10px;
       margin: 25px 0;
     }
 
@@ -49,16 +64,13 @@
       font: inherit;
     }
 
-    button.active {
+    button.active, button.primary {
       background: #ef6b40;
       border-color: #ef6b40;
       color: white;
     }
 
-    button:disabled {
-      opacity: 0.6;
-      cursor: wait;
-    }
+    button:disabled { opacity: 0.6; cursor: wait; }
 
     .card {
       background: white;
@@ -95,43 +107,115 @@
       text-transform: capitalize;
     }
 
-    .status.pending { background: #fff2df; color: #956315; }
-    .status.confirmed { background: #e8f1ff; color: #3667ac; }
+    .status.pending, .status.confirmed {
+      background: #fff2df;
+      color: #956315;
+    }
 
-    #message { color: #6d7c89; }
-    #message.error { color: #b53c3c; }
+    .status.assigned { background: #e8f1ff; color: #3667ac; }
+    .status.delivering { background: #efebff; color: #7050ac; }
+    .status.completed { background: #e8f7ef; color: #24734b; }
+    .status.failed, .status.cancelled {
+      background: #ffeded;
+      color: #a84343;
+    }
+
+    .error { color: #b53c3c; }
 
     dialog {
-      width: min(600px, 92vw);
-      max-height: 85vh;
+      width: min(650px, 94vw);
+      max-height: 88vh;
       overflow-y: auto;
       border: none;
       border-radius: 12px;
       padding: 25px;
     }
 
+    #new-order-dialog { width: min(900px, 94vw); }
     dialog::backdrop { background: #18232e88; }
 
     .dialog-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 15px;
     }
 
     .dialog-header h2 { margin: 0; }
 
     dl {
       display: grid;
-      grid-template-columns: 140px 1fr;
+      grid-template-columns: 150px 1fr;
       gap: 15px;
-      margin-top: 25px;
+      margin: 25px 0;
     }
 
     dt { color: #6d7c89; }
     dd { margin: 0; overflow-wrap: anywhere; }
 
-    @media (max-width: 600px) {
-      header span { display: block; margin: 8px 0 0; }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin-top: 25px;
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 11px;
+      border: 1px solid #dce2e8;
+      border-radius: 7px;
+      background: white;
+      font: inherit;
+    }
+
+    textarea { min-height: 75px; resize: vertical; }
+    .wide { grid-column: 1 / -1; }
+
+    .food-row {
+      display: grid;
+      grid-template-columns: 2fr 0.7fr 1fr 1fr auto;
+      align-items: end;
+      gap: 10px;
+      padding: 15px 0;
+      border-bottom: 1px solid #e3e8ed;
+    }
+
+    .food-row output {
+      display: block;
+      padding: 11px 0;
+      font-weight: bold;
+    }
+
+    .summary {
+      background: #f8fafb;
+      border-radius: 8px;
+      padding: 18px;
+    }
+
+    .summary p {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      margin: 12px 0;
+    }
+
+    .form-actions {
+      justify-content: flex-end;
+      margin: 0;
+    }
+
+    @media (max-width: 650px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .food-row { grid-template-columns: 1fr 1fr; }
+      .food-row label:first-child { grid-column: 1 / -1; }
       dl { grid-template-columns: 1fr; gap: 8px; }
       dd { margin-bottom: 12px; }
       .card { padding: 12px; }
@@ -141,23 +225,34 @@
 
 <body>
   <header>
-    <strong>DispatchFlow</strong>
-    <span>Fleet & Delivery DSS · Manager Portal</span>
+    <strong>ShopeeFood Delivery DSS</strong>
+    <small>Academic Prototype · Manager Portal</small>
+
+    <nav aria-label="Main navigation">
+      <a href="/">Orders</a>
+      <a href="/fleet.html">Fleet Management</a>
+      <a href="/drivers.html">Manage Drivers</a>
+      <a href="/dispatch.html">Dispatch</a>
+      <a href="/dispatch-history.html">Dispatch History</a>
+      <a href="/account.html">Account</a>
+    </nav>
   </header>
 
   <main>
-    <h1>Orders</h1>
-    <p class="subtitle">Review delivery orders and customer details.</p>
+    <h1>Food Orders</h1>
+    <p class="muted">
+      Review restaurant pickups, customer deliveries and payment details.
+    </p>
 
     <div class="toolbar">
       <button id="pending-button" class="active">Pending Orders</button>
       <button id="all-button">All Orders</button>
       <button id="refresh-button">Refresh</button>
-      <button id="new-order-button">+ New Order</button>
+      <button id="new-order-button" class="primary">+ New Order</button>
     </div>
 
     <section class="card">
-      <p id="message" role="status"></p>
+      <p id="message" class="muted" role="status"></p>
 
       <div class="table-wrapper">
         <table>
@@ -179,9 +274,147 @@
   <dialog id="details-dialog" aria-labelledby="details-title">
     <div class="dialog-header">
       <h2 id="details-title">Order Details</h2>
-      <button id="close-dialog" aria-label="Close order details">Close</button>
+      <button id="close-details" type="button">Close</button>
     </div>
     <div id="details-content"></div>
+  </dialog>
+
+  <dialog id="new-order-dialog" aria-labelledby="new-order-title">
+    <div class="dialog-header">
+      <h2 id="new-order-title">Create Food Order</h2>
+      <button id="close-new-order" type="button">Close</button>
+    </div>
+
+    <form id="new-order-form" class="form-grid">
+      <label>
+        Order Code
+        <input
+          name="order_code"
+          placeholder="SF006"
+          maxlength="30"
+          pattern="[A-Za-z0-9_\-]+"
+          required
+        >
+      </label>
+
+      <label>
+        Restaurant
+        <select name="restaurant_id" id="restaurant-select" required>
+          <option value="">Select a restaurant</option>
+        </select>
+      </label>
+
+      <p id="restaurant-info" class="muted wide"></p>
+
+      <label>
+        Customer Name
+        <input name="customer_name" maxlength="100" required>
+      </label>
+
+      <label>
+        Customer Phone
+        <input
+          name="customer_phone"
+          type="tel"
+          maxlength="16"
+          pattern="\+?[0-9]{8,15}"
+          required
+        >
+      </label>
+
+      <label class="wide">
+        Delivery Address
+        <textarea name="delivery_address" maxlength="255" required></textarea>
+      </label>
+
+      <label>
+        Delivery Latitude
+        <input
+          name="latitude"
+          type="number"
+          min="-90"
+          max="90"
+          step="any"
+          required
+        >
+      </label>
+
+      <label>
+        Delivery Longitude
+        <input
+          name="longitude"
+          type="number"
+          min="-180"
+          max="180"
+          step="any"
+          required
+        >
+      </label>
+
+      <label>
+        Package Weight (kg)
+        <input
+          name="weight_kg"
+          type="number"
+          min="0.01"
+          max="100000"
+          step="0.01"
+          required
+        >
+      </label>
+
+      <label>
+        Delivery Deadline — Local Time
+        <input name="due_at" type="datetime-local" required>
+      </label>
+
+      <label>
+        Delivery Fee (VND)
+        <input
+          name="delivery_fee"
+          type="number"
+          min="0"
+          max="1000000"
+          step="1"
+          required
+        >
+      </label>
+
+      <label>
+        Payment Method
+        <select name="payment_method">
+          <option value="cash">Cash on Delivery</option>
+          <option value="prepaid">Prepaid</option>
+        </select>
+      </label>
+
+      <section class="wide">
+        <h3>Food Items</h3>
+        <div id="food-items"></div>
+        <button id="add-food-item" type="button">+ Add Item</button>
+      </section>
+
+      <section class="summary wide">
+        <p><span>Food Subtotal</span><strong id="food-subtotal"></strong></p>
+        <p><span>Delivery Fee</span><strong id="fee-summary"></strong></p>
+        <p><span>Total Amount</span><strong id="total-summary"></strong></p>
+        <p><span>COD to Collect</span><strong id="cod-summary"></strong></p>
+      </section>
+
+      <p class="muted wide">
+        Payment method records how the order will be settled.
+        This prototype does not process online payments.
+      </p>
+
+      <p id="new-order-error" class="error wide" role="alert"></p>
+
+      <div class="form-actions wide">
+        <button id="cancel-new-order" type="button">Cancel</button>
+        <button id="create-order-button" class="primary" type="submit">
+          Create Order
+        </button>
+      </div>
+    </form>
   </dialog>
 
   <script>
@@ -190,8 +423,18 @@
     const pendingButton = document.getElementById("pending-button");
     const allButton = document.getElementById("all-button");
     const refreshButton = document.getElementById("refresh-button");
-    const dialog = document.getElementById("details-dialog");
+    const newOrderButton = document.getElementById("new-order-button");
+
+    const detailsDialog = document.getElementById("details-dialog");
     const detailsContent = document.getElementById("details-content");
+
+    const newOrderDialog = document.getElementById("new-order-dialog");
+    const newOrderForm = document.getElementById("new-order-form");
+    const newOrderError = document.getElementById("new-order-error");
+    const createOrderButton = document.getElementById("create-order-button");
+    const restaurantSelect = document.getElementById("restaurant-select");
+    const foodItems = document.getElementById("food-items");
+    const addFoodItemButton = document.getElementById("add-food-item");
 
     const currency = new Intl.NumberFormat("en-US", {
       style: "currency",
@@ -200,370 +443,517 @@
     });
 
     let currentView = "pending";
-    let loading = false;
+    let loadingOrders = false;
+    let creatingOrder = false;
+    let restaurants = [];
+    let detailsRequest = 0;
 
-    function setLoading(value) {
-      loading = value;
+    async function requestJson(url, options = {}) {
+      const response = await fetch(url, options);
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "The request failed.");
+      }
+
+      return result;
+    }
+
+    function createElement(tag, text, className = "") {
+      const node = document.createElement(tag);
+      node.textContent = text;
+
+      if (className) node.className = className;
+
+      return node;
+    }
+
+    function appendDetails(container, fields) {
+      const list = document.createElement("dl");
+
+      for (const [label, value] of fields) {
+        list.append(
+          createElement("dt", label),
+          createElement("dd", value)
+        );
+      }
+
+      container.appendChild(list);
+    }
+
+    function setOrdersLoading(value) {
+      loadingOrders = value;
       pendingButton.disabled = value;
       allButton.disabled = value;
       refreshButton.disabled = value;
+      newOrderButton.disabled = value;
     }
 
     async function loadOrders() {
-      if (loading) return;
+      if (loadingOrders) return;
 
-      setLoading(true);
-      message.className = "";
+      setOrdersLoading(true);
+      message.className = "muted";
       message.textContent = "Loading orders...";
       tbody.replaceChildren();
 
       try {
-        const url = currentView === "pending"
-          ? "/api/orders/pending"
-          : "/api/orders";
-
-        const response = await fetch(url);
-
-        if (!response.ok) {
-          throw new Error("Unable to load orders. Please try again.");
-        }
-
-        const result = await response.json();
+        const result = await requestJson(
+          currentView === "pending"
+            ? "/api/orders/pending"
+            : "/api/orders"
+        );
 
         for (const order of result.data) {
           const row = document.createElement("tr");
 
-          const values = [
+          for (const value of [
             order.order_code,
             order.customer_name,
             currency.format(Number(order.total_amount))
-          ];
-
-          for (const value of values) {
-            const cell = document.createElement("td");
-            cell.textContent = value;
-            row.appendChild(cell);
+          ]) {
+            row.appendChild(createElement("td", value));
           }
 
           const statusCell = document.createElement("td");
-          const statusBadge = document.createElement("span");
-          statusBadge.className = "status";
+          const status = createElement("span", order.status, "status");
 
-          if (["pending", "confirmed"].includes(order.status)) {
-            statusBadge.classList.add(order.status);
+          if ([
+            "pending", "confirmed", "assigned", "delivering",
+            "completed", "failed", "cancelled"
+          ].includes(order.status)) {
+            status.classList.add(order.status);
           }
 
-          statusBadge.textContent = order.status;
-          statusCell.appendChild(statusBadge);
+          statusCell.appendChild(status);
           row.appendChild(statusCell);
 
           const actionCell = document.createElement("td");
-          const detailsButton = document.createElement("button");
-          detailsButton.textContent = "View Details";
+          const button = createElement("button", "View Details");
+          button.type = "button";
 
-          detailsButton.addEventListener("click", async () => {
-            detailsButton.disabled = true;
+          button.addEventListener("click", async () => {
+            button.disabled = true;
+
             try {
               await showDetails(order.id);
             } finally {
-              detailsButton.disabled = false;
+              button.disabled = false;
             }
           });
 
-          actionCell.appendChild(detailsButton);
+          actionCell.appendChild(button);
           row.appendChild(actionCell);
           tbody.appendChild(row);
         }
 
-        message.textContent = result.data.length
-          ? `${result.data.length} orders found.`
-          : "No orders found.";
+        message.textContent = `${result.data.length} orders found.`;
       } catch (error) {
         message.className = "error";
         message.textContent = error.message;
       } finally {
-        setLoading(false);
+        setOrdersLoading(false);
       }
     }
 
     async function showDetails(id) {
+      const thisRequest = ++detailsRequest;
       detailsContent.textContent = "Loading order details...";
 
-      if (!dialog.open) {
-        dialog.showModal();
-      }
+      if (!detailsDialog.open) detailsDialog.showModal();
 
       try {
-        const response = await fetch(`/api/orders/${id}`);
-        const result = await response.json();
+        const result = await requestJson(`/api/orders/${id}`);
 
-        if (!response.ok) {
-          throw new Error(result.message || "Unable to load order details.");
+        if (
+          thisRequest !== detailsRequest ||
+          !detailsDialog.open
+        ) {
+          return;
         }
 
         const order = result.data;
-        const fields = [
+        const container = document.createElement("div");
+
+        const payment = order.payment_method === "cash"
+          ? "Cash on Delivery"
+          : order.payment_method === "prepaid"
+            ? "Prepaid"
+            : "Not recorded";
+
+        appendDetails(container, [
           ["Order Code", order.order_code],
+          ["Restaurant", order.restaurant_name || "Not selected"],
+          ["Pickup Address", order.pickup_address || "Not recorded"],
+          ["Restaurant Phone", order.restaurant_phone || "Not recorded"],
           ["Customer", order.customer_name],
-          ["Phone", order.customer_phone],
-          ["Address", order.delivery_address],
-          ["Total Amount", currency.format(Number(order.total_amount))],
+          ["Customer Phone", order.customer_phone],
+          ["Delivery Address", order.delivery_address],
+          ["Payment Method", payment],
+          ["COD to Collect", currency.format(Number(order.cod_amount || 0))],
           ["Status", order.status],
+          ["Assigned Driver", order.assigned_driver || "Unassigned"],
           ["Created At", new Date(order.created_at).toLocaleString("en-GB")]
-        ];
+        ]);
 
-        const list = document.createElement("dl");
+        container.appendChild(createElement("h3", "Food Items"));
 
-        for (const [label, value] of fields) {
-          const term = document.createElement("dt");
-          const description = document.createElement("dd");
+        const items = Array.isArray(result.items) ? result.items : [];
 
-          term.textContent = label;
-          description.textContent = value;
-          list.append(term, description);
+        if (items.length) {
+          const wrapper = document.createElement("div");
+          wrapper.className = "table-wrapper";
+
+          const table = document.createElement("table");
+          const head = document.createElement("thead");
+          const headerRow = document.createElement("tr");
+
+          for (const label of ["Item", "Qty", "Unit Price", "Amount"]) {
+            headerRow.appendChild(createElement("th", label));
+          }
+
+          head.appendChild(headerRow);
+          table.appendChild(head);
+
+          const body = document.createElement("tbody");
+
+          for (const item of items) {
+            const row = document.createElement("tr");
+
+            for (const value of [
+              item.item_name,
+              item.quantity,
+              currency.format(Number(item.unit_price)),
+              currency.format(Number(item.line_total))
+            ]) {
+              row.appendChild(createElement("td", value));
+            }
+
+            body.appendChild(row);
+          }
+
+          table.appendChild(body);
+          wrapper.appendChild(table);
+          container.appendChild(wrapper);
+        } else {
+          container.appendChild(
+            createElement("p", "No food items recorded.")
+          );
         }
 
-        detailsContent.replaceChildren(list);
+        container.appendChild(createElement("h3", "Payment Summary"));
+
+        appendDetails(container, [
+          [
+            "Food Subtotal",
+            order.food_subtotal == null
+              ? "Not recorded"
+              : currency.format(Number(order.food_subtotal))
+          ],
+          ["Delivery Fee", currency.format(Number(order.delivery_fee || 0))],
+          ["Total Amount", currency.format(Number(order.total_amount))]
+        ]);
+
+        detailsContent.replaceChildren(container);
       } catch (error) {
-        detailsContent.textContent = error.message;
+        if (thisRequest === detailsRequest && detailsDialog.open) {
+          detailsContent.textContent = error.message;
+        }
       }
     }
 
+    function field(name) {
+      return newOrderForm.elements.namedItem(name);
+    }
+
+    function syncItemButtons() {
+      const rows = foodItems.querySelectorAll(".food-row");
+
+      rows.forEach(row => {
+        row.querySelector(".remove-item").disabled =
+          creatingOrder || rows.length === 1;
+      });
+
+      addFoodItemButton.disabled =
+        creatingOrder || rows.length >= 50;
+    }
+
+    function updateTotals() {
+      let subtotal = 0;
+
+      for (const row of foodItems.querySelectorAll(".food-row")) {
+        const quantity = Number(row.querySelector(".item-quantity").value);
+        const price = Number(row.querySelector(".item-price").value);
+
+        const amount = Number.isFinite(quantity * price)
+          ? quantity * price
+          : 0;
+
+        row.querySelector("output").textContent = currency.format(amount);
+        subtotal += amount;
+      }
+
+      const rawFee = Number(field("delivery_fee").value);
+      const fee = Number.isFinite(rawFee) ? rawFee : 0;
+      const total = subtotal + fee;
+
+      const cod = field("payment_method").value === "cash"
+        ? total
+        : 0;
+
+      document.getElementById("food-subtotal").textContent =
+        currency.format(subtotal);
+
+      document.getElementById("fee-summary").textContent =
+        currency.format(fee);
+
+      document.getElementById("total-summary").textContent =
+        currency.format(total);
+
+      document.getElementById("cod-summary").textContent =
+        currency.format(cod);
+    }
+
+    function addFoodRow() {
+      if (creatingOrder) return;
+      if (foodItems.querySelectorAll(".food-row").length >= 50) return;
+
+      const row = document.createElement("div");
+      row.className = "food-row";
+
+      const definitions = [
+        {
+          label: "Item Name",
+          className: "item-name",
+          type: "text",
+          maxLength: 150,
+          placeholder: "Chicken Rice"
+        },
+        {
+          label: "Quantity",
+          className: "item-quantity",
+          type: "number",
+          min: 1,
+          max: 100,
+          step: 1,
+          value: 1
+        },
+        {
+          label: "Unit Price (VND)",
+          className: "item-price",
+          type: "number",
+          min: 0,
+          max: 1000000000,
+          step: 1,
+          placeholder: "45000"
+        }
+      ];
+
+      for (const definition of definitions) {
+        const label = createElement("label", definition.label);
+        const input = document.createElement("input");
+
+        input.className = definition.className;
+        input.type = definition.type;
+        input.required = true;
+
+        for (const property of [
+          "min", "max", "step", "maxLength", "placeholder", "value"
+        ]) {
+          if (definition[property] !== undefined) {
+            input[property] = definition[property];
+          }
+        }
+
+        input.addEventListener("input", updateTotals);
+        label.appendChild(input);
+        row.appendChild(label);
+      }
+
+      const amountLabel = createElement("label", "Amount");
+      amountLabel.appendChild(document.createElement("output"));
+      row.appendChild(amountLabel);
+
+      const remove = createElement("button", "Remove", "remove-item");
+      remove.type = "button";
+
+      remove.addEventListener("click", () => {
+        if (creatingOrder) return;
+
+        row.remove();
+        syncItemButtons();
+        updateTotals();
+      });
+
+      row.appendChild(remove);
+      foodItems.appendChild(row);
+
+      syncItemButtons();
+      updateTotals();
+    }
+
+    function localDateTime(date) {
+      const shifted = new Date(
+        date.getTime() - date.getTimezoneOffset() * 60000
+      );
+
+      return shifted.toISOString().slice(0, 16);
+    }
+
+    function showRestaurantInfo() {
+      const restaurant = restaurants.find(
+        item => item.id === Number(restaurantSelect.value)
+      );
+
+      document.getElementById("restaurant-info").textContent =
+        restaurant
+          ? `Pickup: ${restaurant.address} · Zone: ${restaurant.service_zone} · Preparation estimate: ${restaurant.estimated_prep_minutes} min.`
+          : "Select the restaurant where the driver will collect the food.";
+    }
+
+    async function openNewOrder() {
+      if (creatingOrder) return;
+
+      newOrderForm.reset();
+      newOrderError.textContent = "";
+      foodItems.replaceChildren();
+
+      field("latitude").value = 10.782;
+      field("longitude").value = 106.708;
+      field("weight_kg").value = 1;
+      field("delivery_fee").value = 15000;
+      field("payment_method").value = "cash";
+
+      field("due_at").value = localDateTime(
+        new Date(Date.now() + 45 * 60000)
+      );
+
+      field("due_at").min = localDateTime(new Date());
+
+      restaurantSelect.replaceChildren();
+
+      const placeholder = createElement("option", "Select a restaurant");
+      placeholder.value = "";
+      restaurantSelect.appendChild(placeholder);
+
+      restaurants = [];
+      showRestaurantInfo();
+      addFoodRow();
+
+      newOrderDialog.showModal();
+      restaurantSelect.disabled = true;
+      createOrderButton.disabled = true;
+
+      try {
+        const result = await requestJson("/api/orders/restaurants");
+        restaurants = result.data;
+
+        for (const restaurant of restaurants) {
+          const option = createElement("option", restaurant.name);
+          option.value = restaurant.id;
+          restaurantSelect.appendChild(option);
+        }
+
+        if (!restaurants.length) {
+          newOrderError.textContent =
+            "No restaurant is currently accepting orders.";
+        }
+      } catch (error) {
+        newOrderError.textContent = error.message;
+      } finally {
+        restaurantSelect.disabled = false;
+        createOrderButton.disabled = restaurants.length === 0;
+      }
+    }
+
+    function closeNewOrder() {
+      if (!creatingOrder) newOrderDialog.close();
+    }
+
+    newOrderForm.addEventListener("submit", async event => {
+      event.preventDefault();
+      if (creatingOrder) return;
+
+      creatingOrder = true;
+      createOrderButton.disabled = true;
+      createOrderButton.textContent = "Creating...";
+      newOrderError.textContent = "";
+
+      try {
+        const body = Object.fromEntries(new FormData(newOrderForm));
+
+        body.restaurant_id = Number(body.restaurant_id);
+        body.latitude = Number(body.latitude);
+        body.longitude = Number(body.longitude);
+        body.weight_kg = Number(body.weight_kg);
+        body.delivery_fee = Number(body.delivery_fee);
+        body.due_at = new Date(body.due_at).toISOString();
+
+        body.items = Array.from(
+          foodItems.querySelectorAll(".food-row"),
+          row => ({
+            item_name: row.querySelector(".item-name").value,
+            quantity: Number(row.querySelector(".item-quantity").value),
+            unit_price: Number(row.querySelector(".item-price").value)
+          })
+        );
+
+        syncItemButtons();
+
+        await requestJson("/api/orders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+
+        newOrderDialog.close();
+        await loadOrders();
+      } catch (error) {
+        newOrderError.textContent = error.message;
+      } finally {
+        creatingOrder = false;
+        createOrderButton.disabled = restaurants.length === 0;
+        createOrderButton.textContent = "Create Order";
+        syncItemButtons();
+      }
+    });
+
     function switchView(view) {
-      if (loading) return;
+      if (loadingOrders) return;
 
       currentView = view;
       pendingButton.classList.toggle("active", view === "pending");
       allButton.classList.toggle("active", view === "all");
+
       loadOrders();
     }
 
     pendingButton.addEventListener("click", () => switchView("pending"));
     allButton.addEventListener("click", () => switchView("all"));
     refreshButton.addEventListener("click", loadOrders);
-    document.getElementById("close-dialog")
-      .addEventListener("click", () => dialog.close());
+    newOrderButton.addEventListener("click", openNewOrder);
+
+    document.getElementById("close-details").addEventListener("click", () => {
+      detailsRequest++;
+      detailsDialog.close();
+    });
+
+    document.getElementById("close-new-order")
+      .addEventListener("click", closeNewOrder);
+
+    document.getElementById("cancel-new-order")
+      .addEventListener("click", closeNewOrder);
+
+    newOrderDialog.addEventListener("cancel", event => {
+      if (creatingOrder) event.preventDefault();
+    });
+
+    restaurantSelect.addEventListener("change", showRestaurantInfo);
+    field("delivery_fee").addEventListener("input", updateTotals);
+    field("payment_method").addEventListener("change", updateTotals);
+    addFoodItemButton.addEventListener("click", addFoodRow);
 
     loadOrders();
   </script>
-  <style>
-  #new-order-button {
-    background: #ef6b40;
-    border-color: #ef6b40;
-    color: white;
-  }
-
-  .order-form-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 18px;
-    margin-top: 25px;
-  }
-
-  .order-form-grid label {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    font-size: 13px;
-  }
-
-  .order-form-grid input,
-  .order-form-grid textarea {
-    width: 100%;
-    padding: 11px;
-    border: 1px solid #dce2e8;
-    border-radius: 7px;
-    font: inherit;
-  }
-
-  .order-form-grid textarea {
-    min-height: 85px;
-    resize: vertical;
-  }
-
-  .full-width {
-    grid-column: 1 / -1;
-  }
-
-  .form-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-  }
-
-  #create-order-button {
-    background: #ef6b40;
-    border-color: #ef6b40;
-    color: white;
-  }
-
-  #new-order-error {
-    color: #b53c3c;
-    margin: 0;
-  }
-
-  @media (max-width: 600px) {
-    .order-form-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-</style>
-
-<dialog id="new-order-dialog" aria-labelledby="new-order-title">
-  <div class="dialog-header">
-    <h2 id="new-order-title">Create New Order</h2>
-    <button
-      id="close-new-order"
-      type="button"
-      aria-label="Close new order form"
-    >
-      Close
-    </button>
-  </div>
-
-  <form id="new-order-form" class="order-form-grid">
-    <label>
-      Order Code
-      <input
-        name="order_code"
-        placeholder="SF005"
-        maxlength="30"
-        pattern="[A-Za-z0-9_-]+"
-        title="Use letters, numbers, hyphens or underscores."
-        required
-      >
-    </label>
-
-    <label>
-      Customer Name
-      <input
-        name="customer_name"
-        placeholder="Demo Customer E"
-        maxlength="100"
-        required
-      >
-    </label>
-
-    <label>
-      Customer Phone
-      <input
-        name="customer_phone"
-        type="tel"
-        placeholder="0900000005"
-        maxlength="16"
-        pattern="\+?[0-9]{8,15}"
-        title="Enter 8–15 digits, optionally starting with +."
-        required
-      >
-    </label>
-
-    <label>
-      Total Amount (VND)
-      <input
-        name="total_amount"
-        type="number"
-        placeholder="110000"
-        min="0"
-        max="1000000000"
-        step="1"
-        required
-      >
-    </label>
-
-    <label class="full-width">
-      Delivery Address
-      <textarea
-        name="delivery_address"
-        placeholder="Demo delivery address E"
-        maxlength="255"
-        required
-      ></textarea>
-    </label>
-
-    <p id="new-order-error" class="full-width" role="alert"></p>
-
-    <div class="form-actions full-width">
-      <button id="cancel-new-order" type="button">Cancel</button>
-      <button id="create-order-button" type="submit">
-        Create Order
-      </button>
-    </div>
-  </form>
-</dialog>
-
-<script>
-  const newOrderDialog = document.getElementById("new-order-dialog");
-  const newOrderForm = document.getElementById("new-order-form");
-  const newOrderError = document.getElementById("new-order-error");
-  const createOrderButton = document.getElementById("create-order-button");
-
-  let creatingOrder = false;
-
-  document.getElementById("new-order-button")
-    .addEventListener("click", () => {
-      newOrderForm.reset();
-      newOrderError.textContent = "";
-      newOrderDialog.showModal();
-    });
-
-  function closeNewOrder() {
-    if (!creatingOrder) {
-      newOrderDialog.close();
-    }
-  }
-
-  document.getElementById("close-new-order")
-    .addEventListener("click", closeNewOrder);
-
-  document.getElementById("cancel-new-order")
-    .addEventListener("click", closeNewOrder);
-
-  newOrderDialog.addEventListener("cancel", (event) => {
-    if (creatingOrder) {
-      event.preventDefault();
-    }
-  });
-
-  newOrderForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-
-    if (creatingOrder) return;
-
-    creatingOrder = true;
-    createOrderButton.disabled = true;
-    createOrderButton.textContent = "Creating...";
-    newOrderError.textContent = "";
-
-    const body = Object.fromEntries(new FormData(newOrderForm));
-    body.total_amount = Number(body.total_amount);
-
-    try {
-      const response = await fetch("/api/orders", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(body)
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || "Unable to create the order.");
-      }
-
-      newOrderDialog.close();
-      newOrderForm.reset();
-
-      await loadOrders();
-    } catch (error) {
-      newOrderError.textContent = error.message;
-    } finally {
-      creatingOrder = false;
-      createOrderButton.disabled = false;
-      createOrderButton.textContent = "Create Order";
-    }
-  });
-</script>
 </body>
 </html>

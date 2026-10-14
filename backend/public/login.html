@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DispatchFlow — Sign In</title>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: #18232e;
+      font-family: Arial, sans-serif;
+      color: #23313f;
+      padding: 25px;
+    }
+
+    .card {
+      width: min(430px, 100%);
+      padding: 35px;
+      background: white;
+      border-radius: 14px;
+    }
+
+    .brand {
+      color: #ef6b40;
+      font-size: 27px;
+      font-weight: bold;
+      margin-bottom: 30px;
+    }
+
+    h1 { font-size: 26px; margin-bottom: 10px; }
+    .muted { color: #6d7c89; line-height: 1.6; }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 20px;
+      font-size: 13px;
+    }
+
+    input {
+      padding: 13px;
+      border: 1px solid #dce2e8;
+      border-radius: 7px;
+      font: inherit;
+    }
+
+    button {
+      width: 100%;
+      padding: 13px;
+      margin-top: 20px;
+      border: none;
+      border-radius: 7px;
+      background: #ef6b40;
+      color: white;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    button:disabled { opacity: 0.6; cursor: wait; }
+
+    #login-error {
+      color: #b53c3c;
+      line-height: 1.5;
+    }
+
+    small { display: block; margin-top: 22px; }
+  </style>
+</head>
+
+<body>
+  <main class="card">
+    <div class="brand">DispatchFlow</div>
+
+    <h1>Sign in to your account</h1>
+    <p class="muted">
+      Fleet & Delivery Decision Support System
+    </p>
+
+    <form id="login-form">
+      <label>
+        Email Address
+        <input
+          name="email"
+          type="email"
+          autocomplete="username"
+          maxlength="150"
+          placeholder="manager@demo.local"
+          required
+        >
+      </label>
+
+      <label>
+        Password
+        <input
+          name="password"
+          type="password"
+          autocomplete="current-password"
+          maxlength="200"
+          required
+        >
+      </label>
+
+      <p id="login-error" role="alert"></p>
+
+      <button id="sign-in-button" type="submit">Sign In</button>
+    </form>
+
+    <small class="muted">
+      Use your application account, not your MySQL credentials.
+    </small>
+  </main>
+
+  <script>
+    const loginForm = document.getElementById("login-form");
+    const loginError = document.getElementById("login-error");
+    const signInButton = document.getElementById("sign-in-button");
+
+    let signingIn = false;
+
+    loginForm.addEventListener("submit", async event => {
+      event.preventDefault();
+      if (signingIn) return;
+
+      signingIn = true;
+      signInButton.disabled = true;
+      signInButton.textContent = "Signing in...";
+      loginError.textContent = "";
+
+      const credentials = Object.fromEntries(
+        new FormData(loginForm)
+      );
+
+      try {
+        const response = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(credentials)
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.message || "Unable to sign in.");
+        }
+
+        loginForm.reset();
+        window.location.replace("/account.html");
+      } catch (error) {
+        loginError.textContent = error.message;
+      } finally {
+        signingIn = false;
+        signInButton.disabled = false;
+        signInButton.textContent = "Sign In";
+      }
+    });
+  </script>
+</body>
+</html>

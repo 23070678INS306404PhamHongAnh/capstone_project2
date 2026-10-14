@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>ShopeeFood Delivery DSS — Dashboard</title>
+
+  <script src="/auth-client.js" data-role="manager"></script>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: #f4f6f8;
+      color: #23313f;
+      font-family: Arial, sans-serif;
+    }
+
+    header {
+      padding: 22px 30px;
+      background: #18232e;
+      color: white;
+    }
+
+    header strong { font-size: 24px; }
+
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    nav a {
+      color: #b8c6d3;
+      text-decoration: none;
+    }
+
+    nav a.active { color: #ff946e; }
+
+    main {
+      max-width: 1250px;
+      margin: 35px auto;
+      padding: 0 20px;
+    }
+
+    .muted {
+      color: #6d7c89;
+      line-height: 1.6;
+    }
+
+    .error { color: #b53c3c; }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      margin: 22px 0;
+    }
+
+    button {
+      padding: 11px 16px;
+      border: 1px solid #dce2e8;
+      border-radius: 7px;
+      background: white;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    button:disabled {
+      opacity: .6;
+      cursor: wait;
+    }
+
+    .primary {
+      background: #ef6b40;
+      border-color: #ef6b40;
+      color: white;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .metric, .card {
+      padding: 22px;
+      background: white;
+      border: 1px solid #e3e8ed;
+      border-radius: 12px;
+    }
+
+    .metric span {
+      color: #6d7c89;
+      font-size: 14px;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 27px;
+      margin-top: 14px;
+      overflow-wrap: anywhere;
+    }
+
+    .card { margin-top: 22px; }
+
+    .notice {
+      padding: 16px;
+      border-left: 3px solid #ef6b40;
+      background: #fff3e9;
+      line-height: 1.6;
+    }
+
+    .table-wrapper { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      white-space: nowrap;
+    }
+
+    th, td {
+      padding: 14px 12px;
+      text-align: left;
+      border-bottom: 1px solid #edf0f3;
+      font-size: 13px;
+    }
+
+    th {
+      background: #f8fafb;
+      color: #6d7c89;
+    }
+
+    .late { color: #b53c3c; }
+    .on-time { color: #087f5b; }
+
+    @media (max-width: 900px) {
+      .metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 500px) {
+      .metrics { grid-template-columns: 1fr; }
+    }
+
+    @media print {
+      header, .toolbar { display: none; }
+      body { background: white; }
+
+      main {
+        max-width: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .metrics {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .metric { padding: 12px; }
+      .metric strong { font-size: 20px; }
+
+      .table-wrapper { overflow: visible; }
+      table { white-space: normal; }
+
+      th, td {
+        padding: 7px 4px;
+        font-size: 10px;
+      }
+
+      tr, .metric { break-inside: avoid; }
+      thead { display: table-header-group; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <strong>ShopeeFood Delivery DSS</strong>
+    <div>Academic Prototype</div>
+
+    <nav aria-label="Main navigation">
+      <a href="/">Orders</a>
+      <a href="/fleet.html">Fleet Management</a>
+      <a href="/drivers.html">Manage Drivers</a>
+      <a href="/dispatch.html">Dispatch</a>
+      <a href="/dispatch-history.html">Dispatch History</a>
+      <a href="/dashboard.html" class="active">Dashboard</a>
+      <a href="/account.html">Account</a>
+    </nav>
+  </header>
+
+  <main>
+    <h1>Delivery Dashboard</h1>
+
+    <p class="muted">
+      All-time delivery results and recorded cash collections.
+    </p>
+
+    <div class="toolbar">
+      <button id="refresh-report" class="primary" type="button">
+        Refresh
+      </button>
+
+      <button id="print-report" type="button" disabled>
+        Print / Save PDF
+      </button>
+    </div>
+
+    <p id="report-message" role="status" class="muted"></p>
+    <p id="report-time" class="muted"></p>
+
+    <section
+      id="report-metrics"
+      class="metrics"
+      aria-label="Delivery metrics"
+    ></section>
+
+    <p class="notice">
+      On-time rate uses completed orders with both a deadline
+      and a completion time.
+      Delivery duration is measured from Start Delivery to completion.
+      Recorded COD is the amount drivers confirmed collecting;
+      it does not confirm settlement with the platform.
+      Overdue demo deadlines remain unchanged.
+    </p>
+
+    <section class="card">
+      <h2>Driver Results</h2>
+
+      <p class="muted">
+        Orders are grouped by their currently recorded assigned driver.
+        A dash means no timed completed deliveries are available.
+      </p>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Driver</th>
+              <th>Status</th>
+              <th>Active</th>
+              <th>Completed</th>
+              <th>Failed</th>
+              <th>On-time Rate</th>
+              <th>Recorded COD</th>
+            </tr>
+          </thead>
+
+          <tbody id="driver-results"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Recent Orders</h2>
+
+      <p class="muted">
+        Up to 50 orders, sorted by the latest available completion,
+        start, assignment or creation time.
+        Times are shown in Vietnam time.
+      </p>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Order</th>
+              <th>Driver</th>
+              <th>Status</th>
+              <th>Deadline</th>
+              <th>Completed At</th>
+              <th>Result</th>
+              <th>COD Required</th>
+              <th>COD Collected</th>
+            </tr>
+          </thead>
+
+          <tbody id="recent-orders"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const refreshButton = document.getElementById("refresh-report");
+    const printButton = document.getElementById("print-report");
+    const message = document.getElementById("report-message");
+    const generatedTime = document.getElementById("report-time");
+    const metrics = document.getElementById("report-metrics");
+    const driverBody = document.getElementById("driver-results");
+    const ordersBody = document.getElementById("recent-orders");
+
+    let loading = false;
+
+    const money = (value) =>
+      new Intl.NumberFormat("vi-VN", {
+        style: "currency",
+        currency: "VND",
+        maximumFractionDigits: 0,
+      }).format(Number(value || 0));
+
+    const count = (value) =>
+      Number(value || 0).toLocaleString("en-US");
+
+    const rate = (value) =>
+      value == null ? "—" : `${Number(value).toFixed(1)}%`;
+
+    function node(tag, text, className = "") {
+      const item = document.createElement(tag);
+
+      if (text != null) item.textContent = String(text);
+      if (className) item.className = className;
+
+      return item;
+    }
+
+    function dateTime(value) {
+      if (!value) return "—";
+
+      let text = String(value);
+
+      if (
+        /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(text)
+      ) {
+        text = text.replace(" ", "T") + "Z";
+      }
+
+      const date = new Date(text);
+
+      return Number.isNaN(date.getTime())
+        ? "—"
+        : date.toLocaleString("en-GB", {
+            timeZone: "Asia/Ho_Chi_Minh",
+          });
+    }
+
+    function emptyRow(body, columns) {
+      const row = node("tr");
+      const cell = node("td", "No records found.");
+
+      cell.colSpan = columns;
+      row.appendChild(cell);
+      body.appendChild(row);
+    }
+
+    function renderReport(data) {
+      const s = data.summary;
+
+      metrics.replaceChildren();
+
+      const cards = [
+        ["Total Orders", count(s.total_orders)],
+        ["Waiting for Assignment", count(s.waiting_orders)],
+        ["Active Deliveries", count(s.active_orders)],
+        ["Completed", count(s.completed_orders)],
+        ["Failed", count(s.failed_orders)],
+        ["Cancelled", count(s.cancelled_orders)],
+        ["On-time Rate", rate(s.on_time_rate)],
+        ["Overdue Open Orders", count(s.overdue_open_orders)],
+        ["Recorded COD Collected", money(s.recorded_cod_collected)],
+        ["COD on Active Deliveries", money(s.active_cod_required)],
+        [
+          "Average Delivery Duration",
+          s.average_delivery_minutes == null
+            ? "—"
+            : `${Number(s.average_delivery_minutes).toFixed(1)} min`,
+        ],
+        [
+          "Completed COD Records to Review",
+          count(
+            Number(s.missing_cod_records) +
+            Number(s.cod_mismatches)
+          ),
+        ],
+      ];
+
+      for (const [label, value] of cards) {
+        const card = node("div", null, "metric");
+
+        card.append(
+          node("span", label),
+          node("strong", value)
+        );
+
+        metrics.appendChild(card);
+      }
+
+      driverBody.replaceChildren();
+
+      for (const driver of data.drivers) {
+        const row = node("tr");
+
+        for (const value of [
+          `${driver.full_name} (${driver.driver_code})`,
+          driver.status,
+          count(driver.active_orders),
+          count(driver.completed_orders),
+          count(driver.failed_orders),
+          rate(driver.on_time_rate),
+          money(driver.recorded_cod_collected),
+        ]) {
+          row.appendChild(node("td", value));
+        }
+
+        driverBody.appendChild(row);
+      }
+
+      if (!data.drivers.length) {
+        emptyRow(driverBody, 7);
+      }
+
+      ordersBody.replaceChildren();
+
+      for (const order of data.recent_orders) {
+        const row = node("tr");
+
+        for (const value of [
+          order.order_code,
+          order.driver_name || "Unassigned",
+          order.status,
+          dateTime(order.due_at),
+          dateTime(order.delivered_at),
+          order.delivery_result || "—",
+          money(order.cod_amount),
+          order.cod_collected == null
+            ? "Not recorded"
+            : money(order.cod_collected),
+        ]) {
+          row.appendChild(node("td", value));
+        }
+
+        if (order.delivery_result === "Late") {
+          row.cells[5].className = "late";
+        }
+
+        if (order.delivery_result === "On time") {
+          row.cells[5].className = "on-time";
+        }
+
+        ordersBody.appendChild(row);
+      }
+
+      if (!data.recent_orders.length) {
+        emptyRow(ordersBody, 8);
+      }
+
+      generatedTime.textContent =
+        `Generated: ${dateTime(data.generated_at)} (Vietnam time). ` +
+        `Timed completed deliveries: ${count(s.timed_completed_orders)}; ` +
+        `on time: ${count(s.on_time_orders)}.`;
+    }
+
+    async function loadReport() {
+      if (loading) return;
+
+      loading = true;
+      refreshButton.disabled = true;
+      printButton.disabled = true;
+
+      message.className = "muted";
+      message.textContent = "Loading report...";
+
+      try {
+        const response = await fetch("/api/reports", {
+          credentials: "same-origin",
+          cache: "no-store",
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            result.message || "Unable to load report."
+          );
+        }
+
+        renderReport(result.data);
+
+        message.textContent = "";
+        printButton.disabled = false;
+      } catch (error) {
+        message.className = "error";
+        message.textContent = error.message;
+      } finally {
+        loading = false;
+        refreshButton.disabled = false;
+      }
+    }
+
+    refreshButton.addEventListener("click", loadReport);
+    printButton.addEventListener("click", () => window.print());
+
+    loadReport();
+  </script>
+</body>
+</html>

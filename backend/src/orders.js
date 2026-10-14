@@ -17,8 +17,40 @@ router.get("/pending", async (req, res) => {
     res.json({ data: orders });
   } catch (error) {
     console.error("Pending orders query failed:", error.code);
+
     res.status(500).json({
       message: "Unable to retrieve pending orders.",
+    });
+  }
+});
+
+// Get restaurants accepting new orders.
+router.get("/restaurants", async (req, res) => {
+  try {
+    const [restaurants] = await pool.execute(`
+      SELECT
+        r.id,
+        r.name,
+        r.address,
+        r.phone,
+        r.latitude,
+        r.longitude,
+        r.zone_id,
+        r.estimated_prep_minutes,
+        z.name AS service_zone
+      FROM restaurants r
+      JOIN zones z ON z.id = r.zone_id
+      WHERE r.accepting_orders = 1
+        AND z.active = 1
+      ORDER BY r.name
+    `);
+
+    res.json({ data: restaurants });
+  } catch (error) {
+    console.error("Restaurants query failed:", error.code);
+
+    res.status(500).json({
+      message: "Unable to retrieve restaurants.",
     });
   }
 });
@@ -36,128 +68,339 @@ router.get("/", async (req, res) => {
     res.json({ data: orders });
   } catch (error) {
     console.error("Orders query failed:", error.code);
+
     res.status(500).json({
       message: "Unable to retrieve orders.",
     });
   }
 });
 
-// Create an order.
+function inputError(message) {
+  return Object.assign(new Error(message), { status: 400 });
+}
+
+function requiredText(value, label, maxLength) {
+  if (
+    typeof value !== "string" ||
+    !value.trim() ||
+    value.trim().length > maxLength
+  ) {
+    throw inputError(
+      `${label} must contain 1–${maxLength} characters.`
+    );
+  }
+
+  return value.trim();
+}
+
+function requiredNumber(value, label, minimum, maximum) {
+  if (
+    !["number", "string"].includes(typeof value) ||
+    String(value).trim() === ""
+  ) {
+    throw inputError(`${label} is required.`);
+  }
+
+  const number = Number(value);
+
+  if (
+    !Number.isFinite(number) ||
+    number < minimum ||
+    number > maximum
+  ) {
+    throw inputError(
+      `${label} must be between ${minimum} and ${maximum}.`
+    );
+  }
+
+  return number;
+}
+
+function wholeNumber(value, label, minimum, maximum) {
+  const number = requiredNumber(value, label, minimum, maximum);
+
+  if (!Number.isSafeInteger(number)) {
+    throw inputError(`${label} must be a whole number.`);
+  }
+
+  return number;
+}
+
+// Create a food order and its items together.
 router.post("/", async (req, res) => {
-  const body = req.body;
-
-  if (!body || typeof body !== "object" || Array.isArray(body)) {
-    return res.status(400).json({
-      message: "A valid order is required.",
-    });
-  }
-
-  const fields = [
-    ["order_code", "Order code", 30],
-    ["customer_name", "Customer name", 100],
-    ["customer_phone", "Customer phone", 20],
-    ["delivery_address", "Delivery address", 255],
-  ];
-
-  const values = {};
-
-  for (const [key, label, maxLength] of fields) {
-    if (
-      typeof body[key] !== "string" ||
-      !body[key].trim() ||
-      body[key].trim().length > maxLength
-    ) {
-      return res.status(400).json({
-        message: `${label} must contain 1–${maxLength} characters.`,
-      });
-    }
-
-    values[key] = body[key].trim();
-  }
-
-  if (
-    !/^[A-Za-z0-9_-]+$/.test(values.order_code)
-  ) {
-    return res.status(400).json({
-      message: "Order code can contain only letters, numbers, - and _.",
-    });
-  }
-
-  if (!/^\+?[0-9]{8,15}$/.test(values.customer_phone)) {
-    return res.status(400).json({
-      message: "Phone must contain 8–15 digits, optionally starting with +.",
-    });
-  }
-
-  const rawAmount = body.total_amount;
-
-  if (
-    !["number", "string"].includes(typeof rawAmount) ||
-    String(rawAmount).trim() === ""
-  ) {
-    return res.status(400).json({
-      message: "Total amount is required.",
-    });
-  }
-
-  const totalAmount = Number(rawAmount);
-
-  if (
-    !Number.isSafeInteger(totalAmount) ||
-    totalAmount < 0 ||
-    totalAmount > 1000000000
-  ) {
-    return res.status(400).json({
-      message: "Total amount must be a whole VND amount from 0 to 1,000,000,000.",
-    });
-  }
+  let connection;
 
   try {
-    const [result] = await pool.execute(
+    const body = req.body;
+
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      throw inputError("A valid food order is required.");
+    }
+
+    const orderCode = requiredText(body.order_code, "Order code", 30);
+
+    if (!/^[A-Za-z0-9_-]+$/.test(orderCode)) {
+      throw inputError(
+        "Order code can contain only letters, numbers, - and _."
+      );
+    }
+
+    const customerName = requiredText(
+      body.customer_name,
+      "Customer name",
+      100
+    );
+
+    const customerPhone = requiredText(
+      body.customer_phone,
+      "Customer phone",
+      20
+    );
+
+    if (!/^\+?[0-9]{8,15}$/.test(customerPhone)) {
+      throw inputError(
+        "Phone must contain 8–15 digits, optionally starting with +."
+      );
+    }
+
+    const deliveryAddress = requiredText(
+      body.delivery_address,
+      "Delivery address",
+      255
+    );
+
+    const restaurantId = wholeNumber(
+      body.restaurant_id,
+      "Restaurant ID",
+      1,
+      4294967295
+    );
+
+    const latitude = requiredNumber(
+      body.latitude,
+      "Delivery latitude",
+      -90,
+      90
+    );
+
+    const longitude = requiredNumber(
+      body.longitude,
+      "Delivery longitude",
+      -180,
+      180
+    );
+
+    const weight = requiredNumber(
+      body.weight_kg,
+      "Package weight",
+      0.01,
+      100000
+    );
+
+    if (Math.abs(weight * 100 - Math.round(weight * 100)) > 0.000001) {
+      throw inputError("Weight supports up to 2 decimal places.");
+    }
+
+    const deliveryFee = wholeNumber(
+      body.delivery_fee,
+      "Delivery fee",
+      0,
+      1000000
+    );
+
+    if (!["prepaid", "cash"].includes(body.payment_method)) {
+      throw inputError("Select prepaid or cash payment.");
+    }
+
+    if (
+      typeof body.due_at !== "string" ||
+      !/T.*(?:Z|[+-]\d{2}:\d{2})$/.test(body.due_at)
+    ) {
+      throw inputError(
+        "Delivery deadline must include its timezone."
+      );
+    }
+
+    const deadline = new Date(body.due_at);
+
+    if (
+      !Number.isFinite(deadline.getTime()) ||
+      deadline.getTime() <= Date.now()
+    ) {
+      throw inputError("Delivery deadline must be in the future.");
+    }
+
+    if (
+      !Array.isArray(body.items) ||
+      body.items.length < 1 ||
+      body.items.length > 50
+    ) {
+      throw inputError("An order requires 1–50 food items.");
+    }
+
+    const items = body.items.map(item => {
+      if (!item || typeof item !== "object" || Array.isArray(item)) {
+        throw inputError("Invalid food item.");
+      }
+
+      return {
+        item_name: requiredText(item.item_name, "Item name", 150),
+        quantity: wholeNumber(item.quantity, "Quantity", 1, 100),
+        unit_price: wholeNumber(
+          item.unit_price,
+          "Unit price",
+          0,
+          1000000000
+        ),
+      };
+    });
+
+    const foodSubtotal = items.reduce(
+      (sum, item) => sum + item.quantity * item.unit_price,
+      0
+    );
+
+    const totalAmount = foodSubtotal + deliveryFee;
+
+    if (
+      !Number.isSafeInteger(totalAmount) ||
+      totalAmount > 1000000000
+    ) {
+      throw inputError("Order total cannot exceed 1,000,000,000 VND.");
+    }
+
+    const codAmount = body.payment_method === "cash"
+      ? totalAmount
+      : 0;
+
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+
+    const [restaurants] = await connection.execute(
+      `
+        SELECT r.id, r.zone_id
+        FROM restaurants r
+        JOIN zones z ON z.id = r.zone_id
+        WHERE r.id = ?
+          AND r.accepting_orders = 1
+          AND z.active = 1
+        FOR UPDATE
+      `,
+      [restaurantId]
+    );
+
+    if (!restaurants.length) {
+      throw inputError(
+        "The restaurant is unavailable or its service zone is inactive."
+      );
+    }
+
+    const restaurant = restaurants[0];
+
+    const [result] = await connection.execute(
       `
         INSERT INTO orders (
           order_code,
           customer_name,
           customer_phone,
           delivery_address,
+          restaurant_id,
+          zone_id,
+          latitude,
+          longitude,
+          weight_kg,
+          due_at,
+          food_subtotal,
+          delivery_fee,
           total_amount,
+          payment_method,
+          cod_amount,
           status
         )
-        VALUES (?, ?, ?, ?, ?, 'pending')
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
       `,
       [
-        values.order_code,
-        values.customer_name,
-        values.customer_phone,
-        values.delivery_address,
+        orderCode,
+        customerName,
+        customerPhone,
+        deliveryAddress,
+        restaurantId,
+        restaurant.zone_id,
+        latitude,
+        longitude,
+        weight,
+        deadline,
+        foodSubtotal,
+        deliveryFee,
         totalAmount,
+        body.payment_method,
+        codAmount,
       ]
     );
 
+    for (const item of items) {
+      await connection.execute(
+        `
+          INSERT INTO order_items (
+            order_id,
+            item_name,
+            quantity,
+            unit_price
+          )
+          VALUES (?, ?, ?, ?)
+        `,
+        [
+          result.insertId,
+          item.item_name,
+          item.quantity,
+          item.unit_price,
+        ]
+      );
+    }
+
+    await connection.commit();
+
     res.status(201).json({
-      message: "Order created successfully.",
+      message: "Food order created successfully.",
       data: {
         id: result.insertId,
-        ...values,
+        order_code: orderCode,
+        food_subtotal: foodSubtotal,
+        delivery_fee: deliveryFee,
         total_amount: totalAmount,
+        payment_method: body.payment_method,
+        cod_amount: codAmount,
         status: "pending",
       },
     });
   } catch (error) {
+    if (connection) {
+      await connection.rollback();
+    }
+
     if (error.code === "ER_DUP_ENTRY") {
       return res.status(409).json({
         message: "This order code already exists.",
       });
     }
 
-    console.error("Order creation failed:", error.code);
+    if (error.status === 400) {
+      return res.status(400).json({
+        message: error.message,
+      });
+    }
+
+    console.error("Food order creation failed:", error.code);
+
     res.status(500).json({
-      message: "Unable to create the order.",
+      message: "Unable to create the food order.",
     });
+  } finally {
+    if (connection) connection.release();
   }
 });
 
-// Get order details.
+// Get food order details.
 router.get("/:id", async (req, res) => {
   const orderId = Number(req.params.id);
 
@@ -170,24 +413,59 @@ router.get("/:id", async (req, res) => {
   try {
     const [orders] = await pool.execute(
       `
-        SELECT id, order_code, customer_name,
-               customer_phone, delivery_address,
-               total_amount, status, created_at
-        FROM orders
-        WHERE id = ?
+        SELECT
+          o.id,
+          o.order_code,
+          o.customer_name,
+          o.customer_phone,
+          o.delivery_address,
+          o.food_subtotal,
+          o.delivery_fee,
+          o.total_amount,
+          o.payment_method,
+          o.cod_amount,
+          o.status,
+          o.created_at,
+          r.name AS restaurant_name,
+          r.address AS pickup_address,
+          r.phone AS restaurant_phone,
+          d.full_name AS assigned_driver
+        FROM orders o
+        LEFT JOIN restaurants r ON r.id = o.restaurant_id
+        LEFT JOIN drivers d ON d.id = o.driver_id
+        WHERE o.id = ?
       `,
       [orderId]
     );
 
-    if (orders.length === 0) {
+    if (!orders.length) {
       return res.status(404).json({
         message: "Order not found.",
       });
     }
 
-    res.json({ data: orders[0] });
+    const [items] = await pool.execute(
+      `
+        SELECT
+          id,
+          item_name,
+          quantity,
+          unit_price,
+          quantity * unit_price AS line_total
+        FROM order_items
+        WHERE order_id = ?
+        ORDER BY id
+      `,
+      [orderId]
+    );
+
+    res.json({
+      data: orders[0],
+      items,
+    });
   } catch (error) {
-    console.error("Order details query failed:", error.code);
+    console.error("Food order details query failed:", error.code);
+
     res.status(500).json({
       message: "Unable to retrieve order details.",
     });
