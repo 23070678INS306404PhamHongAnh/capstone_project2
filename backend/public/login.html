@@ -10,6 +10,7 @@
   <style>
     :root {
       --orange: #ee4d2d;
+      --orange-light: #fff5f1;
       --ink: #222;
     }
 
@@ -19,7 +20,7 @@
 
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
       color: var(--ink);
       background: #f5f5f5;
     }
@@ -50,6 +51,7 @@
 
     .topbar {
       background: white;
+      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
     }
 
     .topbar-inner {
@@ -65,9 +67,10 @@
     .brand {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
       color: var(--orange);
       font-size: 27px;
+      font-weight: 700;
       letter-spacing: -.8px;
     }
 
@@ -78,8 +81,11 @@
     }
 
     .page-label {
-      font-size: 24px;
-      font-weight: 400;
+      font-size: 22px;
+      font-weight: 500;
+      padding-left: 14px;
+      border-left: 1px solid #e0e0e0;
+      color: #333;
     }
 
     .text-button {
@@ -95,16 +101,16 @@
     }
 
     .hero {
-      background: var(--orange);
+      background: linear-gradient(135deg, #ee4d2d 0%, #ff6633 100%);
     }
 
     .hero-inner {
       max-width: 1100px;
-      min-height: 600px;
-      padding: 32px 24px;
+      min-height: 620px;
+      padding: 36px 24px;
       margin: auto;
       display: grid;
-      grid-template-columns: 1fr 400px;
+      grid-template-columns: 1fr 420px;
       align-items: center;
       gap: 64px;
     }
@@ -122,55 +128,137 @@
 
     .hero-brand h1 {
       margin: 2px 0 0;
-      font-weight: 400;
-      font-size: 62px;
-      letter-spacing: -2px;
+      font-weight: 700;
+      font-size: 60px;
+      letter-spacing: -1.5px;
     }
 
     .hero-brand p {
-      margin: 42px auto 0;
+      margin: 32px auto 0;
       max-width: 450px;
-      font-size: 24px;
-      line-height: 1.6;
+      font-size: 22px;
+      line-height: 1.55;
     }
 
     .hero-brand small {
-      display: block;
-      margin-top: 14px;
+      display: inline-block;
+      margin-top: 18px;
       font-size: 13px;
-      opacity: .9;
+      background: rgba(255, 255, 255, 0.18);
+      padding: 6px 14px;
+      border-radius: 99px;
     }
 
     .login-card {
       width: 100%;
       padding: 28px 30px;
-      border-radius: 4px;
+      border-radius: 8px;
       background: white;
-      box-shadow: 0 3px 12px #0002;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
     }
 
     .card-heading {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 14px;
-      margin-bottom: 24px;
+      gap: 12px;
+      margin-bottom: 14px;
     }
 
     .card-heading h2 {
       font-size: 20px;
-      font-weight: 400;
+      font-weight: 700;
       margin: 0;
+      color: #222;
     }
 
     .access-note {
-      padding: 10px 12px;
-      max-width: 172px;
+      padding: 6px 10px;
       border: 1px solid #ffbf00;
       background: #fffbed;
       color: #986c00;
-      font-size: 12px;
-      line-height: 1.4;
+      font-size: 11px;
+      border-radius: 4px;
+      line-height: 1.35;
+      font-weight: 600;
+    }
+
+    /* ==================== CHỌN VAI TRÒ: MANAGER HAY TÀI XẾ ==================== */
+    .role-prompt {
+      font-size: 13px;
+      color: #555;
+      margin: 0 0 10px 0;
+      font-weight: 500;
+    }
+
+    .role-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .role-tab {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 12px 10px;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 6px;
+      background: #fafafa;
+      color: #555;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .role-tab svg {
+      width: 22px;
+      height: 22px;
+      color: #888;
+      transition: color 0.2s ease;
+    }
+
+    .role-tab strong {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .role-tab span {
+      font-size: 11px;
+      color: #888;
+    }
+
+    .role-tab:hover {
+      border-color: #ffb399;
+      background: #fffcfb;
+    }
+
+    .role-tab.active {
+      border-color: var(--orange);
+      background: var(--orange-light);
+      color: var(--orange);
+      box-shadow: 0 2px 8px rgba(238, 77, 45, 0.12);
+    }
+
+    .role-tab.active svg {
+      color: var(--orange);
+    }
+
+    .role-tab.active span {
+      color: #d73211;
+    }
+
+    .role-welcome {
+      font-size: 12.5px;
+      color: #444;
+      background: #f8f9fa;
+      border-left: 3px solid var(--orange);
+      padding: 9px 12px;
+      margin-bottom: 18px;
+      border-radius: 0 4px 4px 0;
+      line-height: 1.45;
     }
 
     .sr-only {
@@ -182,22 +270,23 @@
     }
 
     .field {
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
 
     .field input {
       width: 100%;
-      height: 42px;
+      height: 44px;
       border: 1px solid #d8d8d8;
-      border-radius: 0;
+      border-radius: 4px;
       padding: 0 12px;
       outline: none;
       font-size: 14px;
+      transition: border-color 0.2s;
     }
 
     .field input:focus {
-      border-color: #555;
-      box-shadow: 0 0 0 1px #555;
+      border-color: var(--orange);
+      box-shadow: 0 0 0 2px rgba(238, 77, 45, 0.15);
     }
 
     .password-field {
@@ -210,8 +299,8 @@
 
     .password-toggle {
       position: absolute;
-      right: 1px;
-      top: 1px;
+      right: 2px;
+      top: 2px;
       height: 40px;
       width: 42px;
       border: 0;
@@ -219,6 +308,7 @@
       color: #777;
       display: grid;
       place-items: center;
+      border-radius: 3px;
     }
 
     .password-toggle svg {
@@ -228,9 +318,10 @@
 
     .forgot-row {
       display: flex;
-      justify-content: flex-end;
-      margin-top: -9px;
-      margin-bottom: 20px;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: -6px;
+      margin-bottom: 18px;
     }
 
     .forgot-row button {
@@ -238,14 +329,26 @@
       font-size: 12px;
     }
 
+    .email-alert-badge {
+      font-size: 11px;
+      color: #087f5b;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
     .login-button {
       width: 100%;
-      height: 42px;
+      height: 44px;
       border: 0;
-      border-radius: 2px;
+      border-radius: 4px;
       background: var(--orange);
       color: white;
       font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      box-shadow: 0 3px 8px rgba(238, 77, 45, 0.3);
+      transition: background 0.2s;
     }
 
     .login-button:hover {
@@ -263,12 +366,14 @@
       font-size: 13px;
       line-height: 1.5;
       color: #b42318;
+      font-weight: 500;
     }
 
     .session-note {
-      margin: 12px 0 22px;
+      margin: 10px 0 18px;
       font-size: 12px;
       color: #666;
+      text-align: center;
     }
 
     .divider {
@@ -276,35 +381,40 @@
       align-items: center;
       gap: 14px;
       color: #b7b7b7;
-      font-size: 12px;
-      margin: 20px 0;
+      font-size: 11px;
+      font-weight: 600;
+      margin: 16px 0;
     }
 
     .divider::before,
     .divider::after {
       content: "";
       height: 1px;
-      background: #ddd;
+      background: #eee;
       flex: 1;
     }
 
     .roles {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
+      gap: 10px;
     }
 
     .role {
-      border: 1px solid #ccc;
-      padding: 11px 8px;
+      border: 1px solid #e6e6e6;
+      border-radius: 4px;
+      padding: 9px 8px;
       text-align: center;
-      font-size: 13px;
+      font-size: 12px;
+      font-weight: 600;
+      background: #fcfcfc;
     }
 
     .role span {
       display: block;
       color: #777;
-      margin-top: 6px;
+      font-weight: 400;
+      margin-top: 4px;
       font-size: 11px;
     }
 
@@ -312,7 +422,7 @@
       text-align: center;
       font-size: 11px;
       line-height: 1.6;
-      margin: 25px 0;
+      margin: 20px 0 14px;
     }
 
     .terms button {
@@ -464,7 +574,7 @@
     @media (max-width: 900px) {
       .hero-inner {
         gap: 30px;
-        grid-template-columns: 1fr 380px;
+        grid-template-columns: 1fr 390px;
       }
 
       .hero-brand h1 {
@@ -622,12 +732,54 @@
         aria-labelledby="login-title"
       >
         <div class="card-heading">
-          <h2 id="login-title">Log In</h2>
+          <h2 id="login-title">Đăng nhập Manager</h2>
 
           <div class="access-note">
-            Authorized accounts only<br>
-            Manager &amp; Driver access
+            Authorized Portal<br>
+            Email Alert Enabled
           </div>
+        </div>
+
+        <p class="role-prompt">Bạn là Manager hay Tài xế? Vui lòng chọn vai trò:</p>
+
+        <!-- 2 Cổng chọn đăng nhập: Manager hoặc Tài xế -->
+        <div class="role-tabs" role="tablist" aria-label="Chọn vai trò đăng nhập">
+          <button
+            type="button"
+            class="role-tab active"
+            data-role-select="manager"
+            role="tab"
+            aria-selected="true"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+              <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+              <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+              <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+            </svg>
+            <strong>Manager</strong>
+            <span>Quản lý &amp; Điều phối</span>
+          </button>
+
+          <button
+            type="button"
+            class="role-tab"
+            data-role-select="driver"
+            role="tab"
+            aria-selected="false"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="5.5" cy="17.5" r="3.5"></circle>
+              <circle cx="18.5" cy="17.5" r="3.5"></circle>
+              <path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-3 11.5V14l-3-3 4-3 2 3h2"></path>
+            </svg>
+            <strong>Tài xế (Driver)</strong>
+            <span>Nhận &amp; Giao đơn</span>
+          </button>
+        </div>
+
+        <div id="role-welcome" class="role-welcome">
+          Xin chào <strong>Manager</strong>! Vui lòng đăng nhập bằng Gmail quản trị để vào hệ thống điều phối.
         </div>
 
         <form id="login-form">
@@ -640,7 +792,7 @@
               id="email"
               name="email"
               type="email"
-              placeholder="Email address"
+              placeholder="Nhập Gmail Manager của bạn"
               autocomplete="username"
               autocapitalize="none"
               spellcheck="false"
@@ -658,7 +810,7 @@
               id="password"
               name="password"
               type="password"
-              placeholder="Password"
+              placeholder="Mật khẩu"
               autocomplete="current-password"
               maxlength="200"
               required
@@ -688,6 +840,10 @@
           </div>
 
           <div class="forgot-row">
+            <span class="email-alert-badge">
+              ✓ Báo mail khi đăng nhập
+            </span>
+
             <button
               class="text-button"
               type="button"
@@ -702,7 +858,7 @@
             class="login-button"
             type="submit"
           >
-            LOG IN
+            ĐĂNG NHẬP MANAGER
           </button>
 
           <p
@@ -714,7 +870,7 @@
         </form>
 
         <p class="session-note">
-          Use the account issued by your project administrator.
+          Hệ thống sẽ tự động gửi thông báo về Gmail sau khi đăng nhập thành công.
         </p>
 
         <div class="divider">ACCOUNT ACCESS</div>
@@ -902,8 +1058,41 @@
     const loginButton = document.getElementById("login-button");
     const toggleButton = document.getElementById("toggle-password");
     const message = document.getElementById("login-message");
+    const loginTitle = document.getElementById("login-title");
+    const roleWelcome = document.getElementById("role-welcome");
+    const roleTabs = document.querySelectorAll("[data-role-select]");
 
     let submitting = false;
+    let selectedRole = "manager";
+
+    // Chuyển đổi qua lại giữa cổng đăng nhập Manager và Tài xế
+    roleTabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        selectedRole = tab.dataset.roleSelect;
+
+        roleTabs.forEach((t) => {
+          const isActive = t === tab;
+          t.classList.toggle("active", isActive);
+          t.setAttribute("aria-selected", String(isActive));
+        });
+
+        message.textContent = "";
+
+        if (selectedRole === "manager") {
+          loginTitle.textContent = "Đăng nhập Manager";
+          roleWelcome.innerHTML =
+            "Xin chào <strong>Manager</strong>! Vui lòng đăng nhập bằng Gmail quản trị để vào hệ thống điều phối.";
+          emailInput.placeholder = "Nhập Gmail Manager của bạn";
+          loginButton.textContent = "ĐĂNG NHẬP MANAGER";
+        } else {
+          loginTitle.textContent = "Đăng nhập Tài xế";
+          roleWelcome.innerHTML =
+            "Xin chào <strong>Tài xế</strong>! Vui lòng đăng nhập tài khoản để xem và cập nhật các đơn giao hàng.";
+          emailInput.placeholder = "Nhập Gmail Tài xế của bạn";
+          loginButton.textContent = "ĐĂNG NHẬP TÀI XẾ";
+        }
+      });
+    });
 
     toggleButton.addEventListener("click", () => {
       const showing = passwordInput.type === "password";
@@ -932,6 +1121,7 @@
       const body = {
         email: emailInput.value.trim(),
         password: passwordInput.value,
+        expectedRole: selectedRole,
       };
 
       const controls = [
@@ -939,6 +1129,7 @@
         passwordInput,
         loginButton,
         toggleButton,
+        ...roleTabs,
       ];
 
       controls.forEach((item) => {
@@ -974,6 +1165,15 @@
           );
         }
 
+        // Kiểm tra xem tài khoản đăng nhập có khớp với tab đã chọn (Manager / Tài xế) hay không
+        if (role !== selectedRole) {
+          throw new Error(
+            selectedRole === "manager"
+              ? "Tài khoản này là của Tài xế. Vui lòng chuyển sang tab 'Tài xế (Driver)' để đăng nhập."
+              : "Tài khoản này là của Manager. Vui lòng chuyển sang tab 'Manager' để đăng nhập."
+          );
+        }
+
         passwordInput.value = "";
 
         window.location.replace(
@@ -995,7 +1195,10 @@
           item.disabled = false;
         });
 
-        loginButton.textContent = "LOG IN";
+        loginButton.textContent =
+          selectedRole === "manager"
+            ? "ĐĂNG NHẬP MANAGER"
+            : "ĐĂNG NHẬP TÀI XẾ";
       }
     });
 
