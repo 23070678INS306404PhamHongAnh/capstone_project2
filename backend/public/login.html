@@ -183,7 +183,7 @@
       font-weight: 600;
     }
 
-    /* ==================== CHỌN VAI TRÒ: MANAGER HAY TÀI XẾ ==================== */
+    /* ==================== SELECT ROLE: MANAGER OR DRIVER ==================== */
     .role-prompt {
       font-size: 13px;
       color: #555;
@@ -732,7 +732,7 @@
         aria-labelledby="login-title"
       >
         <div class="card-heading">
-          <h2 id="login-title">Đăng nhập Manager</h2>
+          <h2 id="login-title">Manager Log In</h2>
 
           <div class="access-note">
             Authorized Portal<br>
@@ -740,10 +740,10 @@
           </div>
         </div>
 
-        <p class="role-prompt">Bạn là Manager hay Tài xế? Vui lòng chọn vai trò:</p>
+        <p class="role-prompt">Are you a Manager or a Driver? Please select your role:</p>
 
-        <!-- 2 Cổng chọn đăng nhập: Manager hoặc Tài xế -->
-        <div class="role-tabs" role="tablist" aria-label="Chọn vai trò đăng nhập">
+        <!-- 2 Login portal options: Manager or Driver -->
+        <div class="role-tabs" role="tablist" aria-label="Select login role">
           <button
             type="button"
             class="role-tab active"
@@ -758,7 +758,7 @@
               <rect x="3" y="14" width="7" height="7" rx="1"></rect>
             </svg>
             <strong>Manager</strong>
-            <span>Quản lý &amp; Điều phối</span>
+            <span>Management &amp; Dispatch</span>
           </button>
 
           <button
@@ -773,13 +773,13 @@
               <circle cx="18.5" cy="17.5" r="3.5"></circle>
               <path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-3 11.5V14l-3-3 4-3 2 3h2"></path>
             </svg>
-            <strong>Tài xế (Driver)</strong>
-            <span>Nhận &amp; Giao đơn</span>
+            <strong>Driver</strong>
+            <span>Receive &amp; Deliver Orders</span>
           </button>
         </div>
 
         <div id="role-welcome" class="role-welcome">
-          Xin chào <strong>Manager</strong>! Vui lòng đăng nhập bằng Gmail quản trị để vào hệ thống điều phối.
+          Welcome, <strong>Manager</strong>! Please log in with your administrator email to access the dispatch system.
         </div>
 
         <form id="login-form">
@@ -792,7 +792,7 @@
               id="email"
               name="email"
               type="email"
-              placeholder="Nhập Gmail Manager của bạn"
+              placeholder="Enter your Manager email"
               autocomplete="username"
               autocapitalize="none"
               spellcheck="false"
@@ -810,7 +810,7 @@
               id="password"
               name="password"
               type="password"
-              placeholder="Mật khẩu"
+              placeholder="Password"
               autocomplete="current-password"
               maxlength="200"
               required
@@ -858,7 +858,7 @@
             class="login-button"
             type="submit"
           >
-            ĐĂNG NHẬP MANAGER
+            LOG IN AS MANAGER
           </button>
 
           <p
@@ -1065,7 +1065,7 @@
     let submitting = false;
     let selectedRole = "manager";
 
-    // Chuyển đổi qua lại giữa cổng đăng nhập Manager và Tài xế
+    // Switch between Manager and Driver login portals
     roleTabs.forEach((tab) => {
       tab.addEventListener("click", () => {
         selectedRole = tab.dataset.roleSelect;
@@ -1079,17 +1079,17 @@
         message.textContent = "";
 
         if (selectedRole === "manager") {
-          loginTitle.textContent = "Đăng nhập Manager";
+          loginTitle.textContent = "Manager Log In";
           roleWelcome.innerHTML =
-            "Xin chào <strong>Manager</strong>! Vui lòng đăng nhập bằng Gmail quản trị để vào hệ thống điều phối.";
-          emailInput.placeholder = "Nhập Gmail Manager của bạn";
-          loginButton.textContent = "ĐĂNG NHẬP MANAGER";
+            "Welcome, <strong>Manager</strong>! Please log in with your administrator email to access the dispatch system.";
+          emailInput.placeholder = "Enter your Manager email";
+          loginButton.textContent = "LOG IN AS MANAGER";
         } else {
-          loginTitle.textContent = "Đăng nhập Tài xế";
+          loginTitle.textContent = "Driver Log In";
           roleWelcome.innerHTML =
-            "Xin chào <strong>Tài xế</strong>! Vui lòng đăng nhập tài khoản để xem và cập nhật các đơn giao hàng.";
-          emailInput.placeholder = "Nhập Gmail Tài xế của bạn";
-          loginButton.textContent = "ĐĂNG NHẬP TÀI XẾ";
+            "Welcome, <strong>Driver</strong>! Please log in to your account to view and update assigned deliveries.";
+          emailInput.placeholder = "Enter your Driver email";
+          loginButton.textContent = "LOG IN AS DRIVER";
         }
       });
     });
@@ -1165,12 +1165,12 @@
           );
         }
 
-        // Kiểm tra xem tài khoản đăng nhập có khớp với tab đã chọn (Manager / Tài xế) hay không
+        // Check if the logged-in account matches the selected tab (Manager / Driver)
         if (role !== selectedRole) {
           throw new Error(
             selectedRole === "manager"
-              ? "Tài khoản này là của Tài xế. Vui lòng chuyển sang tab 'Tài xế (Driver)' để đăng nhập."
-              : "Tài khoản này là của Manager. Vui lòng chuyển sang tab 'Manager' để đăng nhập."
+              ? "This is a Driver account. Please switch to the 'Driver' tab to log in."
+              : "This is a Manager account. Please switch to the 'Manager' tab to log in."
           );
         }
 
@@ -1197,8 +1197,8 @@
 
         loginButton.textContent =
           selectedRole === "manager"
-            ? "ĐĂNG NHẬP MANAGER"
-            : "ĐĂNG NHẬP TÀI XẾ";
+            ? "LOG IN AS MANAGER"
+            : "LOG IN AS DRIVER";
       }
     });
 
