@@ -841,7 +841,7 @@
 
           <div class="forgot-row">
             <span class="email-alert-badge">
-              ✓ Báo mail khi đăng nhập
+              Account security notifications
             </span>
 
             <button
@@ -870,7 +870,7 @@
         </form>
 
         <p class="session-note">
-          Hệ thống sẽ tự động gửi thông báo về Gmail sau khi đăng nhập thành công.
+          Security notices are sent to your registered email when email delivery is enabled.
         </p>
 
         <div class="divider">ACCOUNT ACCESS</div>
@@ -1256,6 +1256,10 @@
 
     document.querySelectorAll("[data-info]").forEach((button) => {
       button.addEventListener("click", () => {
+        if (button.dataset.info === "forgot") {
+          window.location.assign("/forgot-password.html");
+          return;
+        }
         const [title, text] = information[button.dataset.info];
 
         document.getElementById("info-title").textContent = title;
