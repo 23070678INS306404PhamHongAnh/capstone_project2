@@ -7,7 +7,11 @@ const {
   hashToken,
 } = require("./security");
 
+const { notify } = require("./mail");
+const passwordResetRouter = require("./password-reset");
+
 const router = express.Router();
+router.use(passwordResetRouter);
 const loginAttempts = new Map();
 
 function sessionToken(req) {
@@ -100,6 +104,11 @@ router.post("/login", async (req, res) => {
     : "";
 
   const password = req.body?.password;
+  const expectedRole = req.body?.expectedRole;
+
+  if (expectedRole != null && !["manager", "driver"].includes(expectedRole)) {
+    return res.status(400).json({ message: "Invalid account role." });
+  }
 
   if (
     !email ||
@@ -155,6 +164,9 @@ router.post("/login", async (req, res) => {
       });
     }
 
+    if (expectedRole && expectedRole !== user.role) {
+      return res.status(403).json({ message: "This account belongs to a different role. Select the correct login tab." });
+    }
     loginAttempts.delete(key);
 
     const token = createToken();
@@ -164,21 +176,37 @@ router.post("/login", async (req, res) => {
       "DELETE FROM sessions WHERE expires_at <= UTC_TIMESTAMP()"
     );
 
-    await pool.execute(
-      `
-        INSERT INTO sessions (
-          token_hash,
-          user_id,
-          csrf_token,
-          expires_at
-        )
-        VALUES (
-          ?, ?, ?,
-          DATE_ADD(UTC_TIMESTAMP(), INTERVAL 8 HOUR)
-        )
-      `,
-      [hashToken(token), user.id, csrfToken]
-    );
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+      const [currentUsers] = await connection.execute(
+        "SELECT id, email, full_name, role, password_hash FROM users WHERE id = ? AND active = 1 FOR UPDATE",
+        [user.id]
+      );
+      const current = currentUsers[0];
+      if (!current || current.password_hash !== user.password_hash || current.email.toLowerCase() !== email) {
+        await connection.rollback();
+        return res.status(401).json({ message: "Your account changed. Sign in again." });
+      }
+      if (expectedRole && expectedRole !== current.role) {
+        await connection.rollback();
+        return res.status(403).json({ message: "This account belongs to a different role. Select the correct login tab." });
+      }
+      user.full_name = current.full_name;
+      user.role = current.role;
+      user.email = current.email;
+      await connection.execute(
+        `INSERT INTO sessions (token_hash, user_id, csrf_token, expires_at)
+         VALUES (?, ?, ?, DATE_ADD(UTC_TIMESTAMP(), INTERVAL 8 HOUR))`,
+        [hashToken(token), user.id, csrfToken]
+      );
+      await connection.commit();
+    } catch (error) {
+      try { await connection.rollback(); } catch {}
+      throw error;
+    } finally {
+      connection.release();
+    }
 
     res.cookie("fleet_session", token, {
       httpOnly: true,
@@ -199,8 +227,10 @@ router.post("/login", async (req, res) => {
       },
       csrf_token: csrfToken,
     });
+
+    notify(user, "login", req.ip);
   } catch (error) {
-    console.error("Login failed:", error.code || error.message);
+    console.error("Login failed:", error.code || error.name);
 
     res.status(500).json({
       message: "Unable to sign in.",
