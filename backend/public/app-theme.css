@@ -1,0 +1,64 @@
+:root {
+  --brand: #ee4d2d;
+  --brand-orange: #ff6633;
+  --ink: #29323b;
+  --border: #f0e2dc;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body.sf-app {
+  margin: 0;
+  background: #fff8f5 !important;
+  color: var(--ink);
+  font-family: "Segoe UI", Arial, sans-serif;
+}
+
+body.sf-app .card,
+body.sf-app .metric,
+body.sf-app .delivery-card {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 4px 18px rgba(120, 52, 20, 0.03);
+}
+
+body.sf-app button {
+  padding: 11px 16px;
+  border: 1px solid #f0cdbf;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #b03b24;
+  font: inherit;
+  cursor: pointer;
+}
+
+body.sf-app button:hover:not(:disabled) {
+  background: #fff0e9;
+}
+
+body.sf-app button.primary,
+body.sf-app button.active {
+  background: linear-gradient(120deg, #ee4d2d, #ff6633);
+  border-color: #ee4d2d;
+  color: #ffffff;
+}
+
+body.sf-app button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+body.sf-app input,
+body.sf-app select,
+body.sf-app textarea {
+  padding: 11px 12px;
+  border: 1px solid #e8dcd6;
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--ink);
+  font: inherit;
+  max-width: 100%;
+}
