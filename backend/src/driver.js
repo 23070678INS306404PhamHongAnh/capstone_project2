@@ -718,5 +718,5 @@ router.post("/orders/:id/progress", async (req, res) => {
     if (connection) connection.release();
   }
 });
-
+router.use(require("./delivery-proof"));
 module.exports = router;
