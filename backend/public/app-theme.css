@@ -80,3 +80,127 @@ body.sf-app > header nav a:hover,
 body.sf-app > header nav a.active {
   color: #ee4d2d;
 }
+.sf-header {
+  background: #ffffff;
+  border-top: 4px solid #ee4d2d;
+  border-bottom: 1px solid #f0e2dc;
+  padding: 20px 28px;
+  position: relative;
+  z-index: 1000;
+}
+
+.sf-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.sf-brand {
+  color: #ee4d2d;
+  font-size: 26px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.sf-user {
+  color: #77818b;
+  font-size: 13px;
+}
+
+.sf-navigation {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.sf-navigation > a,
+.sf-navigation summary {
+  display: block;
+  padding: 10px 14px;
+  color: #454e56;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.sf-navigation details {
+  position: relative;
+}
+
+.sf-navigation summary {
+  list-style: none;
+}
+
+.sf-navigation summary::after {
+  content: " ▾";
+  color: #ee4d2d;
+}
+
+.sf-navigation summary::-webkit-details-marker {
+  display: none;
+}
+
+.sf-navigation > a:hover,
+.sf-navigation details[open] summary {
+  background: #fff0e9;
+  color: #ee4d2d;
+}
+
+.sf-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 220px;
+  padding: 8px;
+  background: #ffffff;
+  border: 1px solid #f0e2dc;
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(100, 45, 20, 0.12);
+}
+
+.sf-dropdown a {
+  display: block;
+  padding: 12px;
+  color: #454e56;
+  font-size: 13px;
+  text-decoration: none;
+  border-radius: 7px;
+}
+
+.sf-dropdown a:hover {
+  background: #fff0e9;
+  color: #ee4d2d;
+}
+
+@media (max-width: 650px) {
+  .sf-header {
+    padding: 16px;
+  }
+
+  .sf-navigation {
+    gap: 2px;
+  }
+
+  .sf-navigation > a,
+  .sf-navigation summary {
+    padding: 10px;
+    font-size: 12px;
+  }
+
+  .sf-navigation details {
+    position: static;
+  }
+
+  .sf-dropdown {
+    top: 100%;
+    left: 12px;
+    right: 12px;
+    min-width: 0;
+  }
+}
