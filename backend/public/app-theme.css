@@ -62,3 +62,21 @@ body.sf-app textarea {
   font: inherit;
   max-width: 100%;
 }
+body.sf-app > header {
+  background: #ffffff;
+  color: #ee4d2d;
+  border-top: 4px solid #ee4d2d;
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 3px 15px rgba(100, 45, 20, 0.05);
+}
+
+body.sf-app > header nav a {
+  color: #5c6269;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+body.sf-app > header nav a:hover,
+body.sf-app > header nav a.active {
+  color: #ee4d2d;
+}
