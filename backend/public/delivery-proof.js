@@ -53,7 +53,7 @@ window.prepareDeliveryPhoto = async function (file) {
         canvas.toBlob(resolve, "image/jpeg", quality);
       });
 
-      if (blob && blob.size <= 600 * 1024) {
+      if (blob && blob.size <= 5 * 1024 * 1024) {
         return blob;
       }
     }
