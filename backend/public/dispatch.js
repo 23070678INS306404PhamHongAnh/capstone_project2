@@ -181,6 +181,31 @@ async function loadRecommendations() {
   candidateList.replaceChildren();
 
   try {
+        const tracking = await requestJson(
+      `/api/dispatch/${orderSelect.value}/tracking`
+    );
+
+    if (
+      ["delivering", "completed", "failed"].includes(
+        tracking.order.status
+      )
+    ) {
+      if (typeof window.renderDeliveryTracking !== "function") {
+        throw new Error(
+          "Delivery tracking did not load. Refresh this page."
+        );
+      }
+
+      window.renderDeliveryTracking(tracking);
+
+      dispatchMessage.textContent =
+        `Order ${tracking.order.order_code}: ` +
+        `${tracking.order.status}. ` +
+        "This order is shown for tracking, not assignment.";
+
+      return;
+    }
+
     const result = await requestJson(
       `/api/dispatch/${orderSelect.value}/recommendations`
     );
