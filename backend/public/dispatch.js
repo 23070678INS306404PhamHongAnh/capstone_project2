@@ -186,6 +186,7 @@ async function loadRecommendations() {
     );
 
     const order = result.order;
+    window.renderDispatchMap?.(result);
 
     document.getElementById("order-title").textContent =
       `${order.order_code} · ${order.customer_name}`;
