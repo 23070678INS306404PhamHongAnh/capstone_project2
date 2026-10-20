@@ -138,6 +138,28 @@
       })
         .addTo(markers)
         .on("click", () => {
+          if (result.tracking) {
+  details.replaceChildren(
+    text("h3", driver.full_name),
+    text(
+      "p",
+      `${driver.driver_code} · ${driver.plate_number}`
+    ),
+    text("p", driver.tracking_phase),
+    text("p", driver.tracking_gps)
+  );
+
+  if (driver.location_accuracy_m != null) {
+    details.appendChild(
+      text(
+        "p",
+        `GPS accuracy: ±${driver.location_accuracy_m} m`
+      )
+    );
+  }
+
+  return;
+}
           details.replaceChildren(
             text("h3", driver.full_name),
             text("p", `${driver.driver_code} · ${driver.plate_number}`),
@@ -207,7 +229,86 @@
       `Positions are stored coordinates, not live GPS. ` +
       `Dashed lines are schematic, not road navigation.`;
   };
+window.renderDeliveryTracking = tracking => {
+  if (!window.L) {
+    message.textContent = "Map library could not load.";
+    return;
+  }
 
+  const phases = {
+    pending: "Waiting for assignment",
+    confirmed: "Order confirmed",
+    assigned: "Driver assigned",
+    to_restaurant: "Travelling to restaurant",
+    at_restaurant: "At restaurant",
+    to_customer: "Delivering to customer",
+    completed: "Delivery completed",
+    failed: "Delivery failed",
+    cancelled: "Order cancelled"
+  };
+
+  const phase = phases[tracking.phase] || tracking.phase;
+
+  let gpsText = "Stored position — no GPS update received.";
+
+  if (tracking.driver?.location_updated_at) {
+    const updated = new Date(
+      tracking.driver.location_updated_at
+    );
+
+    const age =
+      Date.parse(tracking.server_time) - updated.getTime();
+
+    const freshness = Number.isFinite(age) && age >= 0
+      ? age <= 180000 ? "Recent GPS" : "Stale GPS"
+      : "GPS timestamp unavailable";
+
+    gpsText =
+      `${freshness} · Last update: ` +
+      updated.toLocaleString("en-GB");
+  }
+
+  const driver = tracking.driver
+    ? {
+        ...tracking.driver,
+        eligible: true,
+        reasons: [],
+        tracking_phase: phase,
+        tracking_gps: gpsText
+      }
+    : null;
+
+  window.renderDispatchMap({
+    order: tracking.order,
+    candidates: driver ? [driver] : [],
+    recommended_driver_id: driver?.id ?? null,
+    tracking: true
+  });
+
+  details.replaceChildren(
+    text("h3", phase),
+    text(
+      "p",
+      driver
+        ? `${driver.full_name} · ${driver.plate_number}`
+        : "No driver assigned."
+    ),
+    text("p", gpsText)
+  );
+
+  if (driver?.location_accuracy_m != null) {
+    details.appendChild(
+      text(
+        "p",
+        `GPS accuracy: ±${driver.location_accuracy_m} m`
+      )
+    );
+  }
+
+  message.textContent = driver
+    ? `${phase}. ${gpsText} Dashed lines are not road navigation.`
+    : "Assign a driver before tracking this delivery.";
+};
   document.getElementById("dispatch-order")
     .addEventListener("change", clearMap);
 
