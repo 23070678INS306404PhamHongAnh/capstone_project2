@@ -5,6 +5,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>DispatchFlow — Dispatch Decisions</title>
+    <link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+>
+
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  defer
+></script>
   <script src="/dispatch.js" defer></script>
 
   <style>
@@ -197,6 +206,25 @@ nav a.active {
     </div>
 
     <section id="candidate-list" aria-label="Driver recommendations"></section>
+      <section class="card" aria-label="Dispatch map">
+  <h2>Delivery Dispatch Map</h2>
+
+  <p class="muted">
+    Select an order to view its pickup location,
+    delivery address and nearby drivers.
+  </p>
+
+  <div
+    id="dispatch-map"
+    style="height: 440px; border-radius: 12px; z-index: 0;"
+  ></div>
+
+  <p id="map-message" class="muted" role="status">
+    Map setup in progress.
+  </p>
+
+  <div id="map-driver-details"></div>
+</section>
   </main>
 </body>
 </html>
