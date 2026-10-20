@@ -434,4 +434,122 @@ router.get("/history", async (req, res) => {
     });
   }
 });
+// Manager-only delivery tracking.
+// Authentication and Manager access are enforced in server.js.
+router.get("/:id/tracking", async (req, res) => {
+  const orderId = Number(req.params.id);
+
+  if (!Number.isSafeInteger(orderId) || orderId <= 0) {
+    return res.status(400).json({
+      message: "Invalid order ID."
+    });
+  }
+
+  try {
+    const [rows] = await pool.execute(
+      `
+        SELECT
+          o.id,
+          o.order_code,
+          o.customer_name,
+          o.status,
+          o.driver_id,
+          o.delivery_address,
+          o.latitude,
+          o.longitude,
+          o.restaurant_arrived_at,
+          o.picked_up_at,
+          o.delivered_at,
+
+          r.name AS restaurant_name,
+          r.latitude AS pickup_latitude,
+          r.longitude AS pickup_longitude,
+
+          d.full_name AS driver_name,
+          d.driver_code,
+          d.latitude AS driver_latitude,
+          d.longitude AS driver_longitude,
+          d.location_accuracy_m,
+
+          DATE_FORMAT(
+            d.location_updated_at,
+            '%Y-%m-%dT%H:%i:%sZ'
+          ) AS location_updated_at,
+
+          v.plate_number
+
+        FROM orders o
+
+        LEFT JOIN restaurants r
+          ON r.id = o.restaurant_id
+
+        LEFT JOIN drivers d
+          ON d.id = o.driver_id
+
+        LEFT JOIN vehicles v
+          ON v.id = d.vehicle_id
+
+        WHERE o.id = ?
+      `,
+      [orderId]
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({
+        message: "Order not found."
+      });
+    }
+
+    const row = rows[0];
+
+    const phase = row.status === "delivering"
+      ? row.picked_up_at
+        ? "to_customer"
+        : row.restaurant_arrived_at
+          ? "at_restaurant"
+          : "to_restaurant"
+      : row.status;
+
+    res.set("Cache-Control", "no-store");
+
+    res.json({
+      order: {
+        id: row.id,
+        order_code: row.order_code,
+        customer_name: row.customer_name,
+        status: row.status,
+        driver_id: row.driver_id,
+        delivery_address: row.delivery_address,
+        latitude: row.latitude,
+        longitude: row.longitude,
+        restaurant_name: row.restaurant_name,
+        pickup_latitude: row.pickup_latitude,
+        pickup_longitude: row.pickup_longitude
+      },
+
+      driver: row.driver_id ? {
+        id: row.driver_id,
+        full_name: row.driver_name,
+        driver_code: row.driver_code,
+        plate_number: row.plate_number,
+        latitude: row.driver_latitude,
+        longitude: row.driver_longitude,
+        location_updated_at: row.location_updated_at,
+        location_accuracy_m: row.location_accuracy_m
+      } : null,
+
+      phase,
+      server_time: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error(
+      "Delivery tracking failed:",
+      error.code || error.name
+    );
+
+    res.status(500).json({
+      message: "Unable to load delivery tracking."
+    });
+  }
+});
 module.exports = router;
