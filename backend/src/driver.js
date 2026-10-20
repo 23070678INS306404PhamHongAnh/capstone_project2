@@ -113,6 +113,78 @@ router.use(async (req, res, next) => {
 });
 
 // Get the current driver's profile.
+// Update the authenticated driver's own GPS position.
+router.post("/location", async (req, res) => {
+  const {
+    latitude,
+    longitude,
+    accuracy_m
+  } = req.body || {};
+
+  const valid =
+    typeof latitude === "number" &&
+    typeof longitude === "number" &&
+    typeof accuracy_m === "number" &&
+    Number.isFinite(latitude) &&
+    Number.isFinite(longitude) &&
+    Number.isFinite(accuracy_m) &&
+    latitude >= -90 &&
+    latitude <= 90 &&
+    longitude >= -180 &&
+    longitude <= 180 &&
+    accuracy_m >= 0 &&
+    accuracy_m <= 10000;
+
+  if (!valid) {
+    return res.status(400).json({
+      message:
+        "Provide valid GPS coordinates and accuracy from 0 to 10,000 metres."
+    });
+  }
+
+  try {
+    const [result] = await pool.execute(
+      `
+        UPDATE drivers
+        SET latitude = ?,
+            longitude = ?,
+            location_accuracy_m = ?,
+            location_updated_at = UTC_TIMESTAMP()
+        WHERE id = ?
+          AND user_id = ?
+      `,
+      [
+        latitude,
+        longitude,
+        Math.round(accuracy_m),
+        req.driver.id,
+        req.user.id
+      ]
+    );
+
+    if (!result.affectedRows) {
+      return res.status(403).json({
+        message: "Your driver account is no longer linked."
+      });
+    }
+
+    res.set("Cache-Control", "no-store");
+
+    res.json({
+      message: "GPS location updated.",
+      updated_at: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error(
+      "Driver GPS update failed:",
+      error.code || error.name
+    );
+
+    res.status(500).json({
+      message: "Unable to save GPS location."
+    });
+  }
+});
 router.get("/profile", (req, res) => {
   res.json({ data: req.driver });
 });
