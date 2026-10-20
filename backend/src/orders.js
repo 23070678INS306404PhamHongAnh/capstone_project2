@@ -471,5 +471,54 @@ router.get("/:id", async (req, res) => {
     });
   }
 });
+// Manager-only access is enforced in server.js.
+router.get("/:id/proof", async (req, res) => {
+  res.setHeader("Cache-Control", "private, no-store");
+  res.setHeader("X-Content-Type-Options", "nosniff");
 
+  const orderId = Number(req.params.id);
+
+  if (!Number.isSafeInteger(orderId) || orderId <= 0) {
+    return res.status(400).json({
+      message: "Invalid order ID.",
+    });
+  }
+
+  try {
+    const [rows] = await pool.execute(
+      `SELECT content_type, image_data
+       FROM order_delivery_proofs
+       WHERE order_id = ?`,
+      [orderId]
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({
+        message: "No delivery photo is available.",
+      });
+    }
+
+    const proof = rows[0];
+
+    if (
+      !["image/jpeg", "image/png", "image/webp"].includes(
+        proof.content_type
+      ) ||
+      !Buffer.isBuffer(proof.image_data)
+    ) {
+      return res.status(500).json({
+        message: "Unable to display the delivery photo.",
+      });
+    }
+
+    res.setHeader("Content-Type", proof.content_type);
+    return res.send(proof.image_data);
+  } catch (error) {
+    console.error("Delivery photo query failed:", error.code);
+
+    return res.status(500).json({
+      message: "Unable to retrieve the delivery photo.",
+    });
+  }
+});
 module.exports = router;
