@@ -42,7 +42,7 @@ router.post(
 
   express.raw({
     type: ["image/jpeg", "image/png", "image/webp"],
-    limit: "600kb"
+    limit: "5mb"
   }),
 
   async (req, res) => {
@@ -162,7 +162,7 @@ router.post(
 router.use((error, req, res, next) => {
   if (error.type === "entity.too.large") {
     return res.status(413).json({
-      message: "Photo must be 600 KB or smaller after compression."
+      message: "Photo must be 5 MB or smaller after compression."
     });
   }
 
