@@ -589,7 +589,22 @@ router.post("/orders/:id/progress", async (req, res) => {
           "Confirm food pickup before completing this delivery."
         );
       }
+const [proofRows] = await connection.execute(
+  `
+    SELECT order_id
+    FROM order_delivery_proofs
+    WHERE order_id = ?
+      AND driver_id = ?
+  `,
+  [order.id, driver.id]
+);
 
+if (!proofRows.length) {
+  throw apiError(
+    409,
+    "Upload a delivery photo before completing this order."
+  );
+}
       const deliveryNote = requiredText(
         body.delivery_note,
         "Delivery confirmation"
