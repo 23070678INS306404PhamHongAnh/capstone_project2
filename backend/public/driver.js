@@ -875,7 +875,29 @@
           cod.min = "0";
           cod.max = "1000000000";
           cod.step = "1";
-          cod.value = String(Number(order.cod_amount || 0));
+          cod.value = order.payment_method === "cash" ? "" : "0";
+cod.readOnly = order.payment_method !== "cash";
+
+cod.placeholder = order.payment_method === "cash"
+  ? "Enter the exact cash collected"
+  : "Prepaid — do not collect cash";
+
+const photo = formField(
+  form,
+  "Delivery Photo — choose from your computer",
+  "proof_photo",
+  "file"
+);
+
+photo.accept = "image/jpeg,image/png,image/webp";
+
+form.appendChild(
+  element(
+    "p",
+    "Choose a photo up to 15 MB. It will be compressed to 5 MB or less.",
+    "df-muted"
+  )
+);
         }
 
         if (action === "fail") {
@@ -940,8 +962,9 @@
           };
 
           if (action === "complete") {
-            body.cod_collected = Number(body.cod_collected);
-          }
+  body.cod_collected = Number(body.cod_collected);
+  delete body.proof_photo;
+}
 
           savingProgress = true;
           errorMessage.textContent = "";
@@ -954,7 +977,39 @@
           submit.textContent = "Saving...";
 
           try {
-            await apiRequest(`/api/driver/orders/${id}/progress`, {
+  if (action === "complete") {
+    if (body.cod_collected !== Number(order.cod_amount)) {
+      throw new Error(
+        "Collected cash must match the required COD amount."
+      );
+    }
+
+    if (typeof window.prepareDeliveryPhoto !== "function") {
+      throw new Error(
+        "Photo helper did not load. Refresh this page."
+      );
+    }
+
+    submit.textContent = "Uploading delivery photo…";
+
+    const file = form
+      .querySelector('[name="proof_photo"]')
+      .files[0];
+
+    const photoBlob = await window.prepareDeliveryPhoto(file);
+
+    await apiRequest(`/api/driver/orders/${id}/proof`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "image/jpeg"
+      },
+      body: photoBlob
+    });
+
+    submit.textContent = "Confirming delivery…";
+  }
+
+  await apiRequest(`/api/driver/orders/${id}/progress`, {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
