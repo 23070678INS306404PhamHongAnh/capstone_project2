@@ -274,6 +274,141 @@ router.put("/vehicles/:id", async (req, res) => {
     });
   }
 });
+// Create login accounts for unlinked scale-demo drivers.
+// Manager authentication and CSRF are enforced in server.js.
+router.post("/demo-driver-accounts", async (req, res) => {
+  const { hashPassword } = require("./security");
+
+  const emailBase = String(
+    req.body?.email_base || req.user.email || ""
+  ).trim().toLowerCase();
+
+  const password = req.body?.password;
+
+  if (!/^[a-z0-9.]+@gmail\.com$/.test(emailBase)) {
+    return res.status(400).json({
+      message: "Enter your base Gmail address without a +alias."
+    });
+  }
+
+  if (
+    typeof password !== "string" ||
+    password.length < 12 ||
+    password.length > 200 ||
+    password.trim() !== password
+  ) {
+    return res.status(400).json({
+      message:
+        "Choose an initial password of 12–200 characters without surrounding spaces."
+    });
+  }
+
+  let connection;
+
+  try {
+    const [drivers] = await pool.execute(`
+      SELECT id, driver_code, full_name
+      FROM drivers
+      WHERE user_id IS NULL
+        AND driver_code REGEXP '^DEMO-SCALE-D[0-9]{3}$'
+      ORDER BY driver_code
+      LIMIT 60
+    `);
+
+    const prepared = [];
+
+    for (const driver of drivers) {
+      const suffix = driver.driver_code.slice(-3);
+
+      prepared.push({
+        ...driver,
+        email: emailBase.replace("@", "+demo" + suffix + "@"),
+        passwordHash: await hashPassword(password)
+      });
+    }
+
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+
+    const accounts = [];
+
+    for (const driver of prepared) {
+      const [current] = await connection.execute(
+        "SELECT user_id FROM drivers WHERE id = ? FOR UPDATE",
+        [driver.id]
+      );
+
+      if (!current.length || current[0].user_id !== null) {
+        continue;
+      }
+
+      const [existing] = await connection.execute(
+        "SELECT id FROM users WHERE email = ?",
+        [driver.email]
+      );
+
+      if (existing.length) {
+        const error = new Error(
+          "A generated email already exists. No accounts were changed."
+        );
+
+        error.status = 409;
+        throw error;
+      }
+
+      const [created] = await connection.execute(
+        `
+          INSERT INTO users (
+            email,
+            full_name,
+            password_hash,
+            role,
+            active
+          )
+          VALUES (?, ?, ?, 'driver', 1)
+        `,
+        [
+          driver.email,
+          driver.full_name,
+          driver.passwordHash
+        ]
+      );
+
+      await connection.execute(
+        "UPDATE drivers SET user_id = ? WHERE id = ?",
+        [created.insertId, driver.id]
+      );
+
+      accounts.push({
+        driver_code: driver.driver_code,
+        full_name: driver.full_name,
+        email: driver.email
+      });
+    }
+
+    await connection.commit();
+
+    res.status(201).json({
+      message: `Created ${accounts.length} demo driver accounts.`,
+      accounts
+    });
+  } catch (error) {
+    if (connection) await connection.rollback();
+
+    console.error(
+      "Demo account creation failed:",
+      error.code || error.name
+    );
+
+    res.status(error.status || 500).json({
+      message: error.status
+        ? error.message
+        : "Unable to create demo driver accounts."
+    });
+  } finally {
+    if (connection) connection.release();
+  }
+});
 module.exports = router;
 // Validate driver information.
 function validateDriver(body) {
